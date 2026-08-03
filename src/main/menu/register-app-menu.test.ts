@@ -103,6 +103,15 @@ describe('registerAppMenu', () => {
     expect(forceReloadItem?.accelerator).toBeUndefined()
   })
 
+  it('hides update checks when the build disables updates', () => {
+    registerAppMenu({ ...buildMenuOptions(), autoUpdateEnabled: false })
+
+    const menuLabel = isMac ? 'Orca' : 'Help'
+    expect(getSubmenu(getTemplate(), menuLabel)).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ label: 'Check for Updates...' })])
+    )
+  })
+
   it('reloads the focused window from the view menu', () => {
     const reloadMock = vi.fn()
     const reloadIgnoringCacheMock = vi.fn()

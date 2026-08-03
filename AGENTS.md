@@ -2,6 +2,13 @@
 
 All UI work — layout, color, typography, spacing, component selection, UX behavior — must follow [`docs/STYLEGUIDE.md`](./docs/STYLEGUIDE.md). Use the tokens defined in `src/renderer/src/assets/main.css` (the canonical source) and the shadcn primitives in `src/renderer/src/components/ui/`. Don't invent new color values, font sizes, or shadow tiers when a documented one already covers the role. When STYLEGUIDE.md is silent, follow the resolution order in its final section.
 
+# Inlineapps Fork
+
+- `origin` is `inlineapps/orca`; `upstream` is `stablyai/orca`. Rebase topic commits onto `upstream/main`.
+- Keep upstream `productName`, `appId`, executable name, and user-data path so both builds reuse settings. Never run both builds simultaneously.
+- Fork releases compile out updater access. Do not restore upstream release feeds.
+- Release locally from clean `main`: `pnpm release:inlineapps:mac vX.Y.Z-inline.N`; use `--unsigned` only when Apple signing credentials are unavailable.
+
 # Style
 ## Concise/Brief Non-obviosu comments ONLY
   * DO NOT: be verbose, explain the obvious, walk through the code ("WHY not HOW")

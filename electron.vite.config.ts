@@ -58,6 +58,12 @@ const ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL =
     ? JSON.stringify(orcaDiagnosticsTokenUrl)
     : 'null'
 
+export function resolveAutoUpdateBuildFlag(env: NodeJS.ProcessEnv): boolean {
+  return env.ORCA_DISABLE_AUTO_UPDATE !== '1'
+}
+
+const ORCA_AUTO_UPDATE_ENABLED_LITERAL = JSON.stringify(resolveAutoUpdateBuildFlag(process.env))
+
 function createStartupDiagnosticsBanner(chunkName: string): string {
   return `
 ;(() => {
@@ -259,7 +265,8 @@ export const electronViteConfig: UserConfig = {
     define: {
       ORCA_BUILD_IDENTITY: ORCA_BUILD_IDENTITY_LITERAL,
       ORCA_POSTHOG_WRITE_KEY: ORCA_POSTHOG_WRITE_KEY_LITERAL,
-      ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL
+      ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL,
+      ORCA_AUTO_UPDATE_ENABLED: ORCA_AUTO_UPDATE_ENABLED_LITERAL
     },
     // Why: @xterm/headless declares "exports": null in package.json, which
     // prevents Vite's default resolver from finding the CJS entry. Point
