@@ -15,6 +15,7 @@ import {
   sendOpenFeatureTour,
   sendOpenSetupGuide
 } from './main-window-actions'
+import { isAutoUpdateEnabled } from '../updater-build-availability'
 import { ensureAutoUpdaterConfigured } from '../window/attach-main-window-services'
 import { logStartupMilestone } from './startup-diagnostics'
 
@@ -28,6 +29,7 @@ export async function initializeMainProcessI18nAndMenu(): Promise<void> {
   logStartupMilestone('i18n-ready')
   registerAppMenu({
     appMenuLabel: state.devInstanceIdentity?.name ?? app.name,
+    autoUpdateEnabled: isAutoUpdateEnabled(),
     onCheckForUpdates: (options) => {
       ensureAutoUpdaterConfigured()
       runUserInitiatedUpdateCheck(options)

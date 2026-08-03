@@ -18,6 +18,7 @@ import { createUpdaterDiagnosticLogger } from '../linux-package-install-diagnost
 import { registerAutoUpdaterHandlers } from '../updater-events'
 import { getServeUpdateHandoffFailure } from '../serve-update-handoff'
 import { recordUpdaterLifecycle } from '../updater-lifecycle-diagnostics'
+import { isAutoUpdateEnabled } from '../updater-build-availability'
 import { AUTO_UPDATE_CHECK_INTERVAL_MS } from './updater-state'
 import { UpdaterDownloadInstall } from './updater-download-install'
 import type { PreQuitCleanupFailureMode, UpdateInstallMode } from './updater-state'
@@ -38,18 +39,31 @@ export type UpdaterSetupOptions = {
 /** Initializes electron-updater and attaches lifecycle/event bridges. */
 export class UpdaterSetup extends UpdaterDownloadInstall {
   checkForUpdates(): void {
+    if (!isAutoUpdateEnabled()) {
+      return
+    }
     this.checkForUpdatesInBackground()
   }
 
   checkForUpdatesFromMenu(options?: UpdateCheckOptions): void {
+    if (!isAutoUpdateEnabled()) {
+      this.sendStatus({ state: 'not-available', userInitiated: true })
+      return
+    }
     super.checkForUpdatesFromMenu(options)
   }
 
   downloadUpdate(): void {
+    if (!isAutoUpdateEnabled()) {
+      return
+    }
     super.downloadUpdate()
   }
 
   quitAndInstall(): void {
+    if (!isAutoUpdateEnabled()) {
+      return
+    }
     super.quitAndInstall()
   }
 
@@ -100,6 +114,9 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     channel: ReleaseChannel,
     options?: ReleaseBuildListOptions
   ): Promise<ReleaseBuild[]> {
+    if (!isAutoUpdateEnabled()) {
+      throw new Error('Updates are disabled for this build.')
+    }
     return super.listAvailableReleaseBuilds(channel, options)
   }
 
@@ -113,6 +130,9 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
 
   setupAutoUpdater(mainWindow: BrowserWindow, opts?: UpdaterSetupOptions): void {
     this.mainWindowRef = mainWindow
+    if (!isAutoUpdateEnabled()) {
+      return
+    }
     this.onBeforeQuitCleanup = opts?.onBeforeQuit ?? null
     this.onBeforeQuitFailure = opts?.onBeforeQuitFailure ?? 'continue'
     this.persistLastUpdateCheckAt = opts?.setLastUpdateCheckAt ?? null
