@@ -104,6 +104,8 @@ src/main/ssh/system-transport/system-ssh-dynamic-forward-process.ts
 src/main/ssh/system-transport/system-ssh-file-transfer.ts
 src/main/ssh/system-transport/system-ssh-operation-lifecycle.ts
 src/main/startup/ensure-virtual-display.ts
+src/main/tsserver/tsserver-instance.ts
+src/main/tsserver/typescript-native-lsp-instance.ts
 src/main/windows-process-tree-kill.ts
 src/main/zsh-startup-hook-pty-harness.ts
 src/shared/ephemeral-vm-recipe-process.ts

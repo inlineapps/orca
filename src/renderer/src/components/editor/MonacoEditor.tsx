@@ -25,6 +25,8 @@ import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 import { useEditorModelRekeyCarry } from './editor-model-rekey-carry'
+import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
+import { getMonacoTsserverRoot } from './monaco-tsserver-eligibility'
 
 type MonacoEditorProps = {
   fileId: string
@@ -42,6 +44,8 @@ type MonacoEditorProps = {
   revealMatchLength?: number
   markdownDocuments?: MarkdownDocument[]
   worktreeId?: string
+  runtimeEnvironmentId?: string | null
+  externalSshTargetId?: string
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
   readOnly?: boolean
@@ -66,6 +70,8 @@ export default function MonacoEditor({
   revealMatchLength,
   markdownDocuments,
   worktreeId,
+  runtimeEnvironmentId,
+  externalSshTargetId,
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
   readOnly = false,
@@ -92,6 +98,21 @@ export default function MonacoEditor({
   contentSyncModeRef.current = readOnly && liveTail ? 'read-only-live-tail' : 'undoable'
 
   const settings = useAppStore((s) => s.settings)
+  const tsserverRootPath = useAppStore((state) => {
+    const executionHostId = getResolvedExecutionHostIdForWorktree(state, worktreeId)
+    const rootPath =
+      worktreeId && executionHostId === 'local'
+        ? (state.getKnownWorktreeById(worktreeId, executionHostId)?.path ?? null)
+        : null
+    return getMonacoTsserverRoot({
+      language,
+      filePath,
+      rootPath,
+      executionHostId,
+      runtimeEnvironmentId,
+      externalSshTargetId
+    })
+  })
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setEditorCursorLine = useAppStore((s) => s.setEditorCursorLine)
@@ -203,6 +224,7 @@ export default function MonacoEditor({
     viewStateId,
     passiveMirror,
     worktreeId,
+    tsserverRootPath,
     autoHeight,
     autoHeightLineHeight,
     editorRef,

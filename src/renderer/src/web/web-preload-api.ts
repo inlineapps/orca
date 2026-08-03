@@ -26,7 +26,8 @@ import {
   createComputerUsePermissionsApi,
   createDeveloperPermissionsApi,
   createPreflightApi,
-  createSkillsApi
+  createSkillsApi,
+  createTsserverApi
 } from './preload-api/web-host-capability-api'
 import { createWebKeybindingsApi } from './preload-api/web-keybindings-api'
 import { createMacosTccPromptsApi } from './preload-api/web-macos-tcc-api'
@@ -129,6 +130,7 @@ function createWebPreloadApi(): Partial<PreloadApi> {
     developerPermissions: createDeveloperPermissionsApi(),
     computerUsePermissions: createComputerUsePermissionsApi(),
     updater: createUpdaterApi(),
+    tsserver: createTsserverApi(),
     shell: createShellApi(),
     skills: createSkillsApi(),
     pty: createPtyApi(),
