@@ -145,6 +145,34 @@ describe('mergeSnapshotAndSessions', () => {
     })
   })
 
+  it('keeps workspace background services separate from terminal sessions', () => {
+    const wt: WorktreeMemory = {
+      worktreeId: 'orca::/Users/me/Capacity',
+      worktreeName: 'Capacity',
+      repoId: 'orca',
+      repoName: 'ORCA',
+      cpu: 4.7,
+      memory: 83_000_000,
+      history: [47_000_000, 83_000_000],
+      sessions: [],
+      backgroundServices: [
+        {
+          serviceId: 'typescript-language-service',
+          serviceKind: 'typescript-language-service',
+          pid: 347,
+          version: '7.2.4',
+          cpu: 4.7,
+          memory: 83_000_000
+        }
+      ]
+    }
+
+    const worktree = mergeSnapshotAndSessions(makeSnapshot([wt]), [], baseCtx())[0].worktrees[0]
+
+    expect(worktree.sessions).toEqual([])
+    expect(worktree.backgroundServices).toEqual(wt.backgroundServices)
+  })
+
   it('dedups: a session present in both snapshot and daemon list renders once with numeric metrics', () => {
     const wt: WorktreeMemory = {
       worktreeId: 'orca::/Users/me/Triton',

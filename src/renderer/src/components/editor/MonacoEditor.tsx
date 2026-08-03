@@ -66,6 +66,11 @@ import {
 import { installMonacoE2EProbe } from './monaco-e2e-probe'
 import { monacoFindOptions } from './monaco-find-options'
 import { matchesPendingEditorFocusRequest } from './pending-editor-focus-request'
+import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
+import { getMonacoTsserverRoot } from './monaco-tsserver-eligibility'
+import { registerTsserverModel } from './monaco-tsserver-model-sync'
+import { installMonacoTsserverProviders } from './monaco-tsserver-providers'
+import { toTsserverScriptKind } from './tsserver-monaco-mapping'
 
 type MonacoEditorProps = {
   fileId: string
@@ -83,6 +88,8 @@ type MonacoEditorProps = {
   revealMatchLength?: number
   markdownDocuments?: MarkdownDocument[]
   worktreeId?: string
+  runtimeEnvironmentId?: string | null
+  externalSshTargetId?: string
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
   readOnly?: boolean
@@ -109,6 +116,8 @@ export default function MonacoEditor({
   revealMatchLength,
   markdownDocuments,
   worktreeId,
+  runtimeEnvironmentId,
+  externalSshTargetId,
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
   readOnly = false,
@@ -141,6 +150,21 @@ export default function MonacoEditor({
   contentSyncModeRef.current = readOnly && liveTail ? 'read-only-live-tail' : 'undoable'
 
   const settings = useAppStore((s) => s.settings)
+  const tsserverRootPath = useAppStore((state) => {
+    const executionHostId = getResolvedExecutionHostIdForWorktree(state, worktreeId)
+    const rootPath =
+      worktreeId && executionHostId === 'local'
+        ? (state.getKnownWorktreeById(worktreeId, executionHostId)?.path ?? null)
+        : null
+    return getMonacoTsserverRoot({
+      language,
+      filePath,
+      rootPath,
+      executionHostId,
+      runtimeEnvironmentId,
+      externalSshTargetId
+    })
+  })
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setEditorCursorLine = useAppStore((s) => s.setEditorCursorLine)
@@ -381,6 +405,20 @@ export default function MonacoEditor({
         endProgrammaticContentSync(filePath)
       }
 
+      let unregisterTsserverModel: (() => void) | null = null
+      const model = editorInstance.getModel()
+      const scriptKindName = toTsserverScriptKind(filePath, languageRef.current)
+      if (model && scriptKindName && tsserverRootPath && worktreeId) {
+        installMonacoTsserverProviders(monaco)
+        unregisterTsserverModel = registerTsserverModel({
+          model,
+          rootPath: tsserverRootPath,
+          filePath,
+          worktreeId,
+          scriptKindName
+        })
+      }
+
       setupCopy(editorInstance, monaco, filePath, propsRef)
       unregisterFileSearchSelectionRef.current?.()
       unregisterFileSearchSelectionRef.current = registerFileSearchSelectedTextProvider(() => {
@@ -529,6 +567,7 @@ export default function MonacoEditor({
         conflictDecorationsRef.current?.clear()
         conflictDecorationsRef.current = null
         uninstallE2EProbe()
+        unregisterTsserverModel?.()
         editorRef.current = null
         setMountedEditor(null)
         setCommentPopover(null)
@@ -584,7 +623,8 @@ export default function MonacoEditor({
       viewStateId,
       autoHeight,
       autoHeightLineHeight,
-      worktreeId
+      worktreeId,
+      tsserverRootPath
     ]
   )
 

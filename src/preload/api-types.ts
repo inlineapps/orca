@@ -9,6 +9,19 @@ import type {
   HostedReviewProvider
 } from '../shared/hosted-review'
 import type { NativeFileDropPayload } from '../shared/native-file-drop'
+import type {
+  TsserverCompletionDetails,
+  TsserverCompletionRequestArgs,
+  TsserverCompletions,
+  TsserverContentEdit,
+  TsserverFileLocationArgs,
+  TsserverFileSpan,
+  TsserverIpcResult,
+  TsserverQuickInfo,
+  TsserverReferenceSpan,
+  TsserverRootAvailability,
+  TsserverScriptKindName
+} from '../shared/tsserver-language-service'
 import type { BrowserFindSource } from '../shared/browser-find-source'
 import type { DashboardSnapshot, DashboardRevealAgentArgs } from '../shared/dashboard-snapshot'
 import type {
@@ -1153,6 +1166,36 @@ export type PluginMarketplaceHostInstallPreview = {
   official: boolean
   bundled: boolean
   blockedByKillList?: { reason: string; advisoryUrl?: string }
+}
+
+export type TsserverApi = {
+  probeRoot: (args: { rootPath: string }) => Promise<TsserverRootAvailability>
+  openFile: (args: {
+    rootPath: string
+    worktreeId: string
+    file: string
+    fileContent: string
+    scriptKindName: TsserverScriptKindName
+  }) => Promise<boolean>
+  updateFile: (args: {
+    rootPath: string
+    file: string
+    edits: TsserverContentEdit[]
+  }) => Promise<boolean>
+  closeFile: (args: { rootPath: string; file: string }) => Promise<void>
+  definition: (args: TsserverFileLocationArgs) => Promise<TsserverIpcResult<TsserverFileSpan[]>>
+  references: (
+    args: TsserverFileLocationArgs
+  ) => Promise<TsserverIpcResult<TsserverReferenceSpan[]>>
+  quickinfo: (
+    args: TsserverFileLocationArgs
+  ) => Promise<TsserverIpcResult<TsserverQuickInfo | null>>
+  completions: (
+    args: TsserverCompletionRequestArgs
+  ) => Promise<TsserverIpcResult<TsserverCompletions | null>>
+  completionDetails: (
+    args: TsserverFileLocationArgs & { entryName: string; source?: string; data?: unknown }
+  ) => Promise<TsserverIpcResult<TsserverCompletionDetails | null>>
 }
 
 export type PreloadApi = {
@@ -2537,6 +2580,7 @@ export type PreloadApi = {
     }) => Promise<ComputerUsePermissionSetupResult>
     reset: () => Promise<ComputerUsePermissionResetResult>
   }
+  tsserver: TsserverApi
   shell: {
     openPath: (path: string) => Promise<void>
     openInFileManager: (path: string) => Promise<ShellOpenLocalPathResult>
