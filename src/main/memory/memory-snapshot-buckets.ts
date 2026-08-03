@@ -1,6 +1,9 @@
 import { basename } from 'node:path'
 import { splitWorktreeIdForFilesystem } from '../../shared/worktree/id'
-import type { SessionMemory } from '../../shared/process-stats-types'
+import type {
+  SessionMemory,
+  WorkspaceBackgroundServiceMemory
+} from '../../shared/process-stats-types'
 import type { Store } from '../persistence'
 import { parseWorkspaceKey } from '../../shared/workspace-scope'
 import { folderWorkspaceToWorktree } from '../../shared/folder-workspace-worktree'
@@ -64,6 +67,7 @@ export type WorktreeMemoryBucket = {
   memory: number
   privateMemory: number
   sessions: SessionMemory[]
+  backgroundServices: WorkspaceBackgroundServiceMemory[]
 }
 
 export function resolveWorktreeMemoryNames(
@@ -114,6 +118,7 @@ export function createEmptyWorktreeMemoryBucket(
     cpu: 0,
     memory: 0,
     privateMemory: 0,
-    sessions: []
+    sessions: [],
+    backgroundServices: []
   }
 }

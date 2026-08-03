@@ -3,6 +3,7 @@ import { closeAllWatchers } from '../ipc/filesystem-watcher'
 import { disposeWorktreeBaseDirectoryWatchers } from '../ipc/worktree-base-directory-watcher'
 import { stopFolderRepoGitUpgradeWatch } from '../ipc/folder-repo-git-upgrade'
 import { killAllPty } from '../ipc/pty'
+import { disposeAllTsservers } from '../ipc/tsserver'
 import { disconnectDaemon, shutdownDaemon } from '../daemon/daemon-init'
 import { beginSshShutdown } from '../ipc/ssh-shutdown-drain'
 import { agentHookServer } from '../agent-hooks/server'
@@ -201,6 +202,7 @@ function installWillQuitHandler(): void {
     // active SSH lease detached in memory synchronously, and that flush is what persists it.
     const sshShutdown = beginSshShutdown()
     killAllPty()
+    const tsserverShutdown = disposeAllTsservers()
     const watcherShutdown = shutdownWatchersOnce()
     const finalStore = state.store
     const storeFlush = (async () => {
@@ -255,6 +257,7 @@ function installWillQuitHandler(): void {
       { name: 'browser', promise: browserShutdown },
       { name: 'runtime-rpc', promise: rpcStopAndClear },
       { name: 'watchers', promise: watcherShutdown },
+      { name: 'tsserver', promise: tsserverShutdown },
       { name: 'emulator', promise: emulatorShutdown },
       { name: 'browser-client-hosts', promise: browserClientHostShutdown },
       { name: 'local-ssh-browser-routes', promise: localSshRouteShutdown },

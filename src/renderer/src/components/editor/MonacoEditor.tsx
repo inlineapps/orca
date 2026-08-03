@@ -24,6 +24,8 @@ import { useMonacoEditorMount } from './use-monaco-editor-mount'
 import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
+import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
+import { getMonacoTsserverRoot } from './monaco-tsserver-eligibility'
 
 type MonacoEditorProps = {
   fileId: string
@@ -41,6 +43,8 @@ type MonacoEditorProps = {
   revealMatchLength?: number
   markdownDocuments?: MarkdownDocument[]
   worktreeId?: string
+  runtimeEnvironmentId?: string | null
+  externalSshTargetId?: string
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
   readOnly?: boolean
@@ -63,6 +67,8 @@ export default function MonacoEditor({
   revealMatchLength,
   markdownDocuments,
   worktreeId,
+  runtimeEnvironmentId,
+  externalSshTargetId,
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
   readOnly = false,
@@ -88,6 +94,21 @@ export default function MonacoEditor({
   contentSyncModeRef.current = readOnly && liveTail ? 'read-only-live-tail' : 'undoable'
 
   const settings = useAppStore((s) => s.settings)
+  const tsserverRootPath = useAppStore((state) => {
+    const executionHostId = getResolvedExecutionHostIdForWorktree(state, worktreeId)
+    const rootPath =
+      worktreeId && executionHostId === 'local'
+        ? (state.getKnownWorktreeById(worktreeId, executionHostId)?.path ?? null)
+        : null
+    return getMonacoTsserverRoot({
+      language,
+      filePath,
+      rootPath,
+      executionHostId,
+      runtimeEnvironmentId,
+      externalSshTargetId
+    })
+  })
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setEditorCursorLine = useAppStore((s) => s.setEditorCursorLine)
@@ -120,8 +141,7 @@ export default function MonacoEditor({
   const [gutterMenuLine, setGutterMenuLine] = useState(1)
   const isDark = useDocumentDarkTheme()
 
-  const { queueReveal, cancelScheduledReveal, clearTransientRevealHighlight } =
-    useMonacoRevealScheduler()
+  const { queueReveal } = useMonacoRevealScheduler()
   const contentSync = useMonacoContentSyncBridge({
     editorRef,
     content,
@@ -143,18 +163,13 @@ export default function MonacoEditor({
   // Why useLayoutEffect: cleanup runs before @monaco-editor/react disposes the editor, so getScrollTop() still reads valid state on unmount.
   useLayoutEffect(() => {
     return () => {
-      // Why: cancel the pending throttled write so it can't fire after this snapshot and overwrite the final position with a stale value.
       if (scrollThrottleTimerRef.current !== null) {
         clearTimeout(scrollThrottleTimerRef.current)
         scrollThrottleTimerRef.current = null
       }
       snapshotMonacoViewState(editorRef, viewStateKey)
-      cancelScheduledReveal()
-      clearTransientRevealHighlight()
-      unregisterFileSearchSelectionRef.current?.()
-      unregisterFileSearchSelectionRef.current = null
     }
-  }, [cancelScheduledReveal, clearTransientRevealHighlight, viewStateKey])
+  }, [viewStateKey])
 
   // Update editor options when settings change
   useEffect(() => {
@@ -186,6 +201,7 @@ export default function MonacoEditor({
     viewStateKey,
     viewStateId,
     worktreeId,
+    tsserverRootPath,
     autoHeight,
     autoHeightLineHeight,
     editorRef,
