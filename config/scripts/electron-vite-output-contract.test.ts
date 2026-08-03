@@ -11,7 +11,7 @@ import {
   BOOTSTRAP_FATAL_LOG_FILE_NAME,
   createBootstrapFatalExitBanner
 } from '../../build-plugins/bootstrap-fatal-exit-banner'
-import { electronViteConfig } from '../../electron.vite.config'
+import { electronViteConfig, resolveAutoUpdateBuildFlag } from '../../electron.vite.config'
 import { BOOTSTRAP_FATAL_EXIT_GUARD_KEY } from '../../src/main/startup/bootstrap-fatal-exit-guard'
 
 const targetConfig = readFileSync('config/electron-vite-target.config.ts', 'utf8')
@@ -68,6 +68,12 @@ function failBootstrapWithBanner(options: {
 }
 
 describe('Electron Vite output contract', () => {
+  it('only disables updates for explicitly marked builds', () => {
+    expect(resolveAutoUpdateBuildFlag({})).toBe(true)
+    expect(resolveAutoUpdateBuildFlag({ ORCA_DISABLE_AUTO_UPDATE: '1' })).toBe(false)
+    expect(resolveAutoUpdateBuildFlag({ ORCA_DISABLE_AUTO_UPDATE: '0' })).toBe(true)
+  })
+
   it('keeps main-process and plain-Node entries at stable CommonJS paths', () => {
     const output = electronViteConfig.main?.build?.rollupOptions?.output
     if (!output || Array.isArray(output)) {

@@ -37,6 +37,7 @@ type RegisterAppMenuOptions = {
   onToggleAppearance: (key: AppearanceMenuKey) => void
   getAppearanceState: () => AppearanceMenuState
   getKeybindings?: () => KeybindingOverrides | undefined
+  autoUpdateEnabled?: boolean
   // Why: the macOS app-menu title. Passed the per-branch dev label since
   // app.name is now pinned to a stable value for Keychain-key stability.
   appMenuLabel?: string
@@ -57,7 +58,8 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     onToggleRightSidebar,
     onToggleAppearance,
     getAppearanceState,
-    getKeybindings
+    getKeybindings,
+    autoUpdateEnabled = true
   } = options
 
   const isMac = process.platform === 'darwin'
@@ -141,7 +143,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     label: options.appMenuLabel ?? app.name,
     submenu: [
       { role: 'about' },
-      checkForUpdatesItem,
+      ...(autoUpdateEnabled ? [checkForUpdatesItem] : []),
       settingsItem,
       { type: 'separator' },
       { role: 'services' },
@@ -304,7 +306,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         : ([
             { type: 'separator' },
             { role: 'about' },
-            checkForUpdatesItem
+            ...(autoUpdateEnabled ? [checkForUpdatesItem] : [])
           ] satisfies Electron.MenuItemConstructorOptions[]))
     ]
   }

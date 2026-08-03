@@ -299,6 +299,24 @@ describe('updater', () => {
     expect(powerMonitorOnMock).not.toHaveBeenCalled()
   })
 
+  it('does not initialize or check when the build disables updates', async () => {
+    vi.stubGlobal('ORCA_AUTO_UPDATE_ENABLED', false)
+    const send = vi.fn()
+    const { checkForUpdates, checkForUpdatesFromMenu, setupAutoUpdater } = await import('./updater')
+
+    setupAutoUpdater({ webContents: { send } } as never)
+    checkForUpdates()
+    checkForUpdatesFromMenu()
+
+    expect(send).toHaveBeenCalledWith('updater:status', {
+      state: 'not-available',
+      userInitiated: true
+    })
+    expect(autoUpdaterMock.setFeedURL).not.toHaveBeenCalled()
+    expect(autoUpdaterMock.checkForUpdates).not.toHaveBeenCalled()
+    expect(powerMonitorOnMock).not.toHaveBeenCalled()
+  })
+
   it.each([
     ['hourly', 'v1.4.160-hourly.202607281400', 'Hourly builds are produced only for macOS.'],
     ['adhoc', 'v1.4.160-adhoc.20260728140533', 'Adhoc builds are produced only for macOS.']
