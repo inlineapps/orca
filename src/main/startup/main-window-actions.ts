@@ -3,6 +3,7 @@ import type { UpdateCheckOptions } from '../../shared/update-status-types'
 import { recordCrashBreadcrumb } from '../crash-reporting/crash-breadcrumb-store'
 import { recordDurableCrashBreadcrumb } from '../crash-reporting/durable-crash-breadcrumb'
 import { checkForUpdatesFromMenu, isQuittingForUpdate } from '../updater'
+import { isAutoUpdateEnabled } from '../updater-build-availability'
 import {
   createSystemTray,
   setMacMenuBarIconVisible,
@@ -81,6 +82,7 @@ export function getSystemTrayOptions(): SystemTrayOptions | null {
     appIcon: store.getSettings().appIcon,
     isDevInstance: state.devInstanceIdentity?.isDev ?? false,
     devInstanceLabel: state.devInstanceIdentity?.devLabel ?? null,
+    autoUpdateEnabled: isAutoUpdateEnabled(),
     onOpen: showMainWindowFromTray,
     onOpenSettings: openSettingsFromSystemMenu,
     onCheckForUpdates: () => {

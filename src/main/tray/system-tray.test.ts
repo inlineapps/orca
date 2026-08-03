@@ -125,12 +125,17 @@ async function loadModule(): Promise<TrayModule> {
 }
 
 function createOptions(
-  overrides: { isDevInstance?: boolean; devInstanceLabel?: string | null } = {}
+  overrides: {
+    autoUpdateEnabled?: boolean
+    isDevInstance?: boolean
+    devInstanceLabel?: string | null
+  } = {}
 ) {
   return {
     appIcon: 'classic',
     isDevInstance: overrides.isDevInstance ?? false,
     devInstanceLabel: overrides.devInstanceLabel ?? null,
+    autoUpdateEnabled: overrides.autoUpdateEnabled,
     onOpen: vi.fn(),
     onOpenSettings: vi.fn(),
     onCheckForUpdates: vi.fn(),
@@ -249,6 +254,15 @@ describe('createSystemTray', () => {
         ?.click?.()
       expect(callback).toHaveBeenCalledOnce()
     }
+  })
+
+  it('hides macOS update checks when the build disables updates', async () => {
+    setPlatform('darwin')
+    const { createSystemTray } = await loadModule()
+
+    createSystemTray(createOptions({ autoUpdateEnabled: false }))
+
+    expect(builtMenuItems().map((item) => item.label)).not.toContain('Check for Updates...')
   })
 
   it('does not create a blank macOS item when the template asset fails to load', async () => {
