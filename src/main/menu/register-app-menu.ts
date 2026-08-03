@@ -40,6 +40,7 @@ type RegisterAppMenuOptions = {
   onToggleAppearance: (key: AppearanceMenuKey) => void
   getAppearanceState: () => AppearanceMenuState
   getKeybindings?: () => KeybindingOverrides | undefined
+  autoUpdateEnabled?: boolean
   // app.name stays stable for Keychain; menus use the per-branch development label.
   appMenuLabel?: string
   onQuit?: () => void
@@ -60,7 +61,8 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     onToggleRightSidebar,
     onToggleAppearance,
     getAppearanceState,
-    getKeybindings
+    getKeybindings,
+    autoUpdateEnabled = true
   } = options
 
   const isMac = process.platform === 'darwin'
@@ -145,7 +147,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     label: options.appMenuLabel ?? app.name,
     submenu: [
       { role: 'about' },
-      checkForUpdatesItem,
+      ...(autoUpdateEnabled ? [checkForUpdatesItem] : []),
       settingsItem,
       { type: 'separator' },
       { role: 'services' },
@@ -307,7 +309,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         : ([
             { type: 'separator' },
             { role: 'about' },
-            checkForUpdatesItem
+            ...(autoUpdateEnabled ? [checkForUpdatesItem] : [])
           ] satisfies Electron.MenuItemConstructorOptions[]))
     ]
   }

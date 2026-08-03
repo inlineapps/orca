@@ -20,6 +20,7 @@ export type SystemTrayOptions = {
   onOpenSettings: () => void
   /** Run the existing user-initiated update check. */
   onCheckForUpdates: () => void
+  autoUpdateEnabled?: boolean
   /** Quit Orca for real (caller must set the quitting latch before quitting). */
   onQuit: () => void
 }
@@ -290,10 +291,14 @@ function buildTrayMenu(opts: SystemTrayOptions): Menu {
             label: translateMain('menu.settings', 'Settings'),
             click: safeMenuAction(() => opts.onOpenSettings())
           },
-          {
-            label: translateMain('menu.checkForUpdates', 'Check for Updates...'),
-            click: safeMenuAction(() => opts.onCheckForUpdates())
-          },
+          ...(opts.autoUpdateEnabled !== false
+            ? [
+                {
+                  label: translateMain('menu.checkForUpdates', 'Check for Updates...'),
+                  click: safeMenuAction(() => opts.onCheckForUpdates())
+                }
+              ]
+            : []),
           { type: 'separator' }
         ] satisfies Electron.MenuItemConstructorOptions[])
       : []),

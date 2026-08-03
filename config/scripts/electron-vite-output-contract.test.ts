@@ -19,7 +19,10 @@ import {
   createBootstrapFatalExitBanner
 } from '../build-plugins/bootstrap-fatal-exit-banner'
 import { createRequire } from 'node:module'
-import configureElectronVite, { electronViteConfig } from '../../electron.vite.config'
+import configureElectronVite, {
+  electronViteConfig,
+  resolveAutoUpdateBuildFlag
+} from '../../electron.vite.config'
 import { BOOTSTRAP_FATAL_EXIT_GUARD_KEY } from '../../src/main/startup/bootstrap-fatal-exit-guard'
 import { FOREIGN_SQLITE_READER_ENTRY_FILENAME } from '../../src/main/foreign-sqlite-readers/foreign-sqlite-reader-entry-path'
 import { ORCAD_CHILD_ENTRY_POINTS } from './orcad-entry-build.mjs'
@@ -144,6 +147,12 @@ describe('Electron Vite output contract', () => {
     // files that the packaged app never ships.
     expect(electronViteConfig.main?.build?.sourcemap).toBe('hidden')
     expect(electronBuilderConfig.files).toContain('!out/**/*.map')
+  })
+
+  it('only disables updates for explicitly marked builds', () => {
+    expect(resolveAutoUpdateBuildFlag({})).toBe(true)
+    expect(resolveAutoUpdateBuildFlag({ ORCA_DISABLE_AUTO_UPDATE: '1' })).toBe(false)
+    expect(resolveAutoUpdateBuildFlag({ ORCA_DISABLE_AUTO_UPDATE: '0' })).toBe(true)
   })
 
   it('keeps main-process and plain-Node entries at stable CommonJS paths', () => {
