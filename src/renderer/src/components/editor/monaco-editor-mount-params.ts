@@ -22,6 +22,7 @@ export type MonacoEditorMountParams = {
   // Why: a read-only mirror of another tab's id must not move that tab's cursor line or take its reveals.
   passiveMirror?: boolean
   worktreeId: string | undefined
+  tsserverRootPath?: string | null
   autoHeight: boolean
   autoHeightLineHeight: number
   editorRef: MutableRefObject<editor.IStandaloneCodeEditor | null>

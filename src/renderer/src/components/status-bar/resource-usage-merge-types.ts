@@ -30,6 +30,15 @@ export type UnifiedSessionRow = {
   readOnly?: true
 }
 
+export type UnifiedBackgroundServiceRow = {
+  serviceId: string
+  serviceKind: 'typescript-language-service'
+  pid: number
+  version?: string
+  cpu: Metric
+  memory: Metric
+}
+
 export type UnifiedWorktreeRow = {
   worktreeId: string
   worktreeName: string
@@ -44,6 +53,7 @@ export type UnifiedWorktreeRow = {
   /** Paired server that sampled this row; absent for this machine and SSH rows. */
   hostLabel?: string
   sessions: UnifiedSessionRow[]
+  backgroundServices: UnifiedBackgroundServiceRow[]
   browsers: BrowserWorkspace[]
 }
 

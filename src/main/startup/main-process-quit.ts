@@ -5,6 +5,7 @@ import { stopFolderRepoGitUpgradeWatch } from '../ipc/folder-repo-git-upgrade'
 import { killAllPty } from '../ipc/pty/kill-all'
 import { disconnectDaemon, shutdownDaemon } from '../daemon/daemon-provider-state'
 import { beginSshShutdown } from '../ipc/ssh/ssh-shutdown-drain'
+import { disposeAllTsservers } from '../ipc/tsserver'
 import { agentHookServer } from '../agent-hooks/server'
 import { wslHookRelayManager } from '../agent-hooks/wsl-hook-relay-manager'
 import { removeManagedAgentHooksAsync } from '../agent-hooks/managed-agent-hook-controls'
@@ -218,6 +219,7 @@ function installWillQuitHandler(): void {
       // active SSH lease detached in memory synchronously, and that flush is what persists it.
       const sshShutdown = beginSshShutdown()
       killAllPty()
+      const tsserverShutdown = disposeAllTsservers()
       const watcherShutdown = shutdownWatchersOnce()
       const storeFlush = (async () => {
         if (!finalStore) {
@@ -232,7 +234,7 @@ function installWillQuitHandler(): void {
           console.error('[persistence] Failed to finalize profile state:', error)
         }
       })()
-      return { sshShutdown, watcherShutdown, storeFlush }
+      return { sshShutdown, tsserverShutdown, watcherShutdown, storeFlush }
     }
     // Layout-owner build: a pane grid still in its write burst lands first (bounded at 1 s); null
     // otherwise, so a quit with none starts the SSH shutdown and final save right here as before.
@@ -241,6 +243,7 @@ function installWillQuitHandler(): void {
       : beginSshShutdownAndFinalSave()
     const sshShutdown = Promise.resolve(finalSaves).then((saves) => saves.sshShutdown)
     const storeFlush = Promise.resolve(finalSaves).then((saves) => saves.storeFlush)
+    const tsserverShutdown = Promise.resolve(finalSaves).then((saves) => saves.tsserverShutdown)
     const watcherShutdown = Promise.resolve(finalSaves).then((saves) => saves.watcherShutdown)
     // Why: usage-cache writes are queued off the main thread, so a quit right after setEnabled or a
     // scan completion would drop the final snapshot. Captured before any await; joins the barrier below.
@@ -287,6 +290,7 @@ function installWillQuitHandler(): void {
       { name: 'browser', promise: browserShutdown },
       { name: 'runtime-rpc', promise: rpcStopAndClear },
       { name: 'watchers', promise: watcherShutdown },
+      { name: 'tsserver', promise: tsserverShutdown },
       { name: 'emulator', promise: emulatorShutdown },
       { name: 'browser-client-hosts', promise: browserClientHostShutdown },
       { name: 'local-ssh-browser-routes', promise: localSshRouteShutdown },

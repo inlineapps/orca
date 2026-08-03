@@ -61,6 +61,7 @@ import type { SshApi } from './api/ssh-api'
 import type { PlainSshTerminalApi } from './api/plain-ssh-terminal-bridge'
 import type { LegacyRelayBridgeApi } from './api/legacy-relay-bridge-api'
 import type { DiagnosticsApi, MemoryApi, StatsApi, TelemetryApi } from './api/telemetry-api'
+import type { TsserverApi } from './api/tsserver-api'
 import type { UiCommandEventApi } from './api/ui-command-event-api'
 import type { UiWindowApi } from './api/ui-window-api'
 import type { UpdaterApi } from './api/updater-api'
@@ -128,6 +129,7 @@ export type PreloadApi = {
   cache: WorkspaceSessionApi['cache']
   session: WorkspaceSessionApi['session']
   updater: UpdaterApi
+  tsserver: TsserverApi
   notebook: FilesystemApi['notebook']
   docPreview: DocPreviewApi['docPreview']
   stats: StatsApi
@@ -227,6 +229,7 @@ export type {
   MemoryApi,
   StatsApi
 } from './api/telemetry-api'
+export type { TsserverApi } from './api/tsserver-api'
 
 declare global {
   // oxlint-disable-next-line typescript-eslint/consistent-type-definitions -- declaration merging requires interface

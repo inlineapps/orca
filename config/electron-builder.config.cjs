@@ -70,6 +70,11 @@ const {
 } = require('./scripts/appimage-node-runtime.cjs')
 const { signWindowsUninstallerViaSignPath } = require('./scripts/windows-uninstaller-signing.cjs')
 const { buildMacShipItScheduling } = require('./scripts/macos-shipit-scheduling.cjs')
+const {
+  chmodBundledTypeScript,
+  createTypeScriptLanguageServiceResources,
+  createTypeScriptNativeResource
+} = require('./typescript-language-service-packaging.cjs')
 
 // Why: dev-channel builds must carry the *release* identity — same bundle id,
 // Developer ID signature, and notarization ticket — or Squirrel.Mac refuses to
@@ -162,7 +167,8 @@ const commonExtraResources = [
   bundledPluginResources,
   skillFreshnessResources,
   nativeChatVisualsResource,
-  emojiShortcodeDatasetResource
+  emojiShortcodeDatasetResource,
+  ...createTypeScriptLanguageServiceResources()
 ]
 // Why: native speech addons must be real files outside app.asar; copy only the
 // package matching the artifact target instead of every optional variant.
@@ -527,6 +533,7 @@ module.exports = {
       signMacBinary: (path) =>
         signMacStandaloneHelper(path, 'orcad template binary', context.packager)
     })
+    chmodBundledTypeScript(resourcesDir, context.electronPlatformName)
     chmodUnixCliLaunchers(resourcesDir, context.electronPlatformName)
     for (const filename of readdirSync(resourcesDir)) {
       if (!filename.startsWith('agent-browser-')) {
@@ -579,6 +586,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...windowsRuntimeResources,
+      createTypeScriptNativeResource('win32'),
       winSpeechNativeResource,
       {
         from: 'resources/win32/bin/orca.cmd',
@@ -667,6 +675,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('darwin'),
+      createTypeScriptNativeResource('darwin'),
       macSpeechNativeResource,
       {
         from: 'resources/darwin/bin/orca',
@@ -735,6 +744,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('linux'),
+      createTypeScriptNativeResource('linux'),
       linuxSpeechNativeResource,
       {
         from: 'native/wayland-clipboard/.build/${arch}/orca-wayland-clipboard',

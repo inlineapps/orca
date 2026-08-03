@@ -19,6 +19,9 @@ import {
   installMonacoViewStateTracking,
   restoreMonacoViewState
 } from './monaco-view-state-persistence'
+import { toTsserverScriptKind } from './tsserver-monaco-mapping'
+import { installMonacoTsserverProviders } from './monaco-tsserver-providers'
+import { registerTsserverModel } from './monaco-tsserver-model-sync'
 import {
   isStaleCachedEditorText,
   mayPushTabTextIntoModel,
@@ -38,6 +41,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
     viewStateId,
     passiveMirror = false,
     worktreeId,
+    tsserverRootPath,
     autoHeight,
     autoHeightLineHeight,
     editorRef,
@@ -142,6 +146,20 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         }
       }
 
+      let unregisterTsserverModel: (() => void) | null = null
+      const model = editorInstance.getModel()
+      const scriptKindName = toTsserverScriptKind(filePath, languageRef.current)
+      if (model && scriptKindName && tsserverRootPath && worktreeId) {
+        installMonacoTsserverProviders(monaco)
+        unregisterTsserverModel = registerTsserverModel({
+          model,
+          rootPath: tsserverRootPath,
+          filePath,
+          worktreeId,
+          scriptKindName
+        })
+      }
+
       setupCopy(editorInstance, monaco, filePath, propsRef)
       unregisterFileSearchSelectionRef.current?.()
       unregisterFileSearchSelectionRef.current = registerFileSearchSelectedTextProvider(() => {
@@ -208,6 +226,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         conflictDecorationsRef.current?.clear()
         conflictDecorationsRef.current = null
         uninstallE2EProbe()
+        unregisterTsserverModel?.()
         editorRef.current = null
         setMountedEditor(null)
         setCommentPopover(null)
@@ -277,6 +296,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       autoHeight,
       autoHeightLineHeight,
       worktreeId,
+      tsserverRootPath,
       editorRef,
       editorContainerRef,
       languageRef,
