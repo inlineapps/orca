@@ -19,6 +19,7 @@ export type MonacoEditorMountParams = {
   viewStateKey: string
   viewStateId: string | undefined
   worktreeId: string | undefined
+  tsserverRootPath?: string | null
   autoHeight: boolean
   autoHeightLineHeight: number
   editorRef: MutableRefObject<editor.IStandaloneCodeEditor | null>

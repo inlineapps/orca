@@ -26,6 +26,15 @@ export type UnifiedSessionRow = {
   hasLocalSamples: boolean
 }
 
+export type UnifiedBackgroundServiceRow = {
+  serviceId: string
+  serviceKind: 'typescript-language-service'
+  pid: number
+  version?: string
+  cpu: Metric
+  memory: Metric
+}
+
 export type UnifiedWorktreeRow = {
   worktreeId: string
   worktreeName: string
@@ -38,6 +47,7 @@ export type UnifiedWorktreeRow = {
   /** Execution-host metadata drives the remote chip; missing samples do not. */
   isRemote: boolean
   sessions: UnifiedSessionRow[]
+  backgroundServices: UnifiedBackgroundServiceRow[]
   browsers: BrowserWorkspace[]
 }
 

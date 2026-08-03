@@ -109,6 +109,21 @@ export function createDeveloperPermissionsApi(): NonNullable<
   }
 }
 
+export function createTsserverApi(): NonNullable<Partial<PreloadApi>['tsserver']> {
+  const unavailable = { ok: false, reason: 'unavailable' } as const
+  return {
+    probeRoot: () => Promise.resolve({ available: false, reason: 'no-tsserver' }),
+    openFile: () => Promise.resolve(false),
+    updateFile: () => Promise.resolve(false),
+    closeFile: () => Promise.resolve(),
+    definition: () => Promise.resolve(unavailable),
+    references: () => Promise.resolve(unavailable),
+    quickinfo: () => Promise.resolve(unavailable),
+    completions: () => Promise.resolve(unavailable),
+    completionDetails: () => Promise.resolve(unavailable)
+  }
+}
+
 export function createComputerUsePermissionsApi(): NonNullable<
   Partial<PreloadApi>['computerUsePermissions']
 > {

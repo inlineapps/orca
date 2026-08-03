@@ -230,6 +230,7 @@ export function mergeSnapshotAndSessions(
         hasLocalSamples: true,
         isRemote,
         sessions,
+        backgroundServices: (wt.backgroundServices ?? []).map((service) => ({ ...service })),
         browsers: []
       })
     }
@@ -291,6 +292,7 @@ export function mergeSnapshotAndSessions(
         hasLocalSamples: false,
         isRemote,
         sessions: [],
+        backgroundServices: [],
         browsers: []
       }
       appendWorktreeRow(repo, row)
@@ -331,6 +333,7 @@ export function mergeSnapshotAndSessions(
         hasLocalSamples: false,
         isRemote: resolveResourceWorkspaceHost(ctx, worktreeId, worktree.repoId).isRemote,
         sessions: [],
+        backgroundServices: [],
         browsers: []
       }
       appendWorktreeRow(repo, row)
