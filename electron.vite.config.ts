@@ -77,6 +77,12 @@ function createDarkBuildMarkerPlugin(): Plugin {
 // bundled skills on every channel. Main runs the installer; the renderer prints the command.
 const ORCA_BUILD_COMMIT_LITERAL = JSON.stringify(resolveBuildSourceCommit())
 
+export function resolveAutoUpdateBuildFlag(env: NodeJS.ProcessEnv): boolean {
+  return env.ORCA_DISABLE_AUTO_UPDATE !== '1'
+}
+
+const ORCA_AUTO_UPDATE_ENABLED_LITERAL = JSON.stringify(resolveAutoUpdateBuildFlag(process.env))
+
 function createStartupDiagnosticsBanner(chunkName: string): string {
   return `
 ;(() => {
@@ -268,6 +274,7 @@ export const electronViteConfig: UserConfig = {
       ORCA_POSTHOG_WRITE_KEY: ORCA_POSTHOG_WRITE_KEY_LITERAL,
       ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL,
       ORCA_BUILD_COMMIT: ORCA_BUILD_COMMIT_LITERAL,
+      ORCA_AUTO_UPDATE_ENABLED: ORCA_AUTO_UPDATE_ENABLED_LITERAL,
       ...DARK_BUILD_DEFINES
     },
     // Why: @xterm/headless declares "exports": null in package.json, which

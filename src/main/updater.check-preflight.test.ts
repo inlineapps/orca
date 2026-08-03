@@ -118,6 +118,24 @@ describe('updater', () => {
     })
   })
 
+  it('does not initialize or check when the build disables updates', async () => {
+    vi.stubGlobal('ORCA_AUTO_UPDATE_ENABLED', false)
+    const send = vi.fn()
+    const { checkForUpdates, checkForUpdatesFromMenu, setupAutoUpdater } = await import('./updater')
+
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: The updater reads only webContents.send from this window fixture.
+    setupAutoUpdater({ webContents: { send } } as never)
+    checkForUpdates()
+    checkForUpdatesFromMenu()
+
+    expect(send).toHaveBeenCalledWith('updater:status', {
+      state: 'not-available',
+      userInitiated: true
+    })
+    expect(autoUpdaterMock.setFeedURL).not.toHaveBeenCalled()
+    expect(autoUpdaterMock.checkForUpdates).not.toHaveBeenCalled()
+  })
+
   it('ignores stale updater events while a new check is still in feed preflight', async () => {
     vi.useFakeTimers()
     let resolveSecondTags: (value: { tags: string[]; state: 'no-newer' }) => void = () => {}
