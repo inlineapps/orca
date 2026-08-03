@@ -20,3 +20,6 @@ declare const ORCA_POSTHOG_WRITE_KEY: string | null
 // point a packaged build at a staging server without re-running the
 // release pipeline.
 declare const ORCA_DIAGNOSTICS_TOKEN_URL: string | null
+
+// Fork release builds disable every updater entry point at compile time.
+declare const ORCA_AUTO_UPDATE_ENABLED: boolean
