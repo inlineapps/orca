@@ -827,6 +827,7 @@ function createWebPreloadApi(): Partial<PreloadApi> {
     developerPermissions: createDeveloperPermissionsApi(),
     computerUsePermissions: createComputerUsePermissionsApi(),
     updater: createUpdaterApi(),
+    tsserver: createTsserverApi(),
     shell: createShellApi(),
     skills: createSkillsApi(),
     pty: createPtyApi(),
@@ -3122,6 +3123,21 @@ function createShellApi(): NonNullable<Partial<PreloadApi>['shell']> {
     pickAudio: () => Promise.resolve(null),
     pickDirectory: () => Promise.resolve(null),
     copyFile: () => Promise.resolve()
+  }
+}
+
+function createTsserverApi(): NonNullable<Partial<PreloadApi>['tsserver']> {
+  const unavailable = { ok: false, reason: 'unavailable' } as const
+  return {
+    probeRoot: () => Promise.resolve({ available: false, reason: 'no-tsserver' }),
+    openFile: () => Promise.resolve(false),
+    updateFile: () => Promise.resolve(false),
+    closeFile: () => Promise.resolve(),
+    definition: () => Promise.resolve(unavailable),
+    references: () => Promise.resolve(unavailable),
+    quickinfo: () => Promise.resolve(unavailable),
+    completions: () => Promise.resolve(unavailable),
+    completionDetails: () => Promise.resolve(unavailable)
   }
 }
 

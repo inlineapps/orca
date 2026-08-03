@@ -43,6 +43,7 @@ import {
   reconcileCodexPaneAccountsWithLivePtys
 } from './codex/codex-pane-account-registry'
 import { closeAllWatchers } from './ipc/filesystem-watcher'
+import { disposeAllTsservers } from './ipc/tsserver'
 import { disposeWorktreeBaseDirectoryWatchers } from './ipc/worktree-base-directory-watcher'
 import { registerCoreHandlers } from './ipc/register-core-handlers'
 import { initObservability, shutdownObservability } from './observability'
@@ -2990,6 +2991,7 @@ app.on('will-quit', (e) => {
   browserManager.setBrowserGuestStateChangedListener(null)
   const emulatorShutdown = runtime?.getEmulatorBridge()?.destroyAllSessions() ?? Promise.resolve()
   killAllPty()
+  const tsserverShutdown = disposeAllTsservers()
   const watcherShutdown = shutdownWatchersOnce()
   const storeFlush = store?.flushAsync() ?? Promise.resolve()
   // Why: usage-cache writes are queued off the main thread, so a quit right after setEnabled or a
@@ -3030,6 +3032,7 @@ app.on('will-quit', (e) => {
     { name: 'daemon', promise: daemonTeardown },
     { name: 'runtime-rpc', promise: rpcStopAndClear },
     { name: 'watchers', promise: watcherShutdown },
+    { name: 'tsserver', promise: tsserverShutdown },
     { name: 'emulator', promise: emulatorShutdown },
     { name: 'plugin-hosts', promise: pluginHostShutdown },
     { name: 'usage-cache', promise: usageCacheFlush },
