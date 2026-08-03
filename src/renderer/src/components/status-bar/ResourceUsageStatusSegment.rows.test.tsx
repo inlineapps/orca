@@ -66,6 +66,7 @@ function makeWorktree(overrides: Partial<UnifiedWorktreeRow>): UnifiedWorktreeRo
     hasLocalSamples: true,
     isRemote: false,
     sessions: [],
+    backgroundServices: [],
     browsers: [],
     ...overrides
   }
@@ -158,5 +159,26 @@ describe('resource manager row presentation', () => {
     expect(container.textContent).toContain('Orca docs')
     expect(container.querySelector('.lucide-globe')).not.toBeNull()
     expect(container.querySelector('button[aria-label^="Open browser"]')).toBeNull()
+  })
+
+  it('shows language services as read-only workspace resources', () => {
+    renderWorktreeRow(
+      makeWorktree({
+        backgroundServices: [
+          {
+            serviceId: 'typescript-language-service',
+            serviceKind: 'typescript-language-service',
+            pid: 347,
+            version: '7.2.4',
+            cpu: 3.7,
+            memory: 83 * 1024 * 1024
+          }
+        ]
+      })
+    )
+
+    expect(container.textContent).toContain('TypeScript 7.2.4 language service')
+    expect(container.querySelector('.lucide-braces')).not.toBeNull()
+    expect(container.querySelector('button[aria-label^="Kill session"]')).toBeNull()
   })
 })

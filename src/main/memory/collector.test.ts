@@ -9,11 +9,18 @@ type AppMetricFixture = {
   memory: { workingSetSize: number }
 }
 
-const { appMetricsMock, execFileMock, execMock, listRegisteredPtysMock } = vi.hoisted(() => ({
+const {
+  appMetricsMock,
+  execFileMock,
+  execMock,
+  listRegisteredPtysMock,
+  listBackgroundServicesMock
+} = vi.hoisted(() => ({
   appMetricsMock: vi.fn<() => AppMetricFixture[]>(() => []),
   execFileMock: vi.fn(),
   execMock: vi.fn(),
-  listRegisteredPtysMock: vi.fn()
+  listRegisteredPtysMock: vi.fn(),
+  listBackgroundServicesMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
@@ -35,6 +42,10 @@ vi.mock('child_process', () => ({
 
 vi.mock('./pty-registry', () => ({
   listRegisteredPtys: listRegisteredPtysMock
+}))
+
+vi.mock('./workspace-background-service-registry', () => ({
+  listWorkspaceBackgroundServices: listBackgroundServicesMock
 }))
 
 async function loadCollector() {
@@ -246,6 +257,8 @@ describe('collectMemorySnapshot', () => {
     execMock.mockReset()
     listRegisteredPtysMock.mockReset()
     listRegisteredPtysMock.mockReturnValue([])
+    listBackgroundServicesMock.mockReset()
+    listBackgroundServicesMock.mockReturnValue([])
   })
 
   function mockPsResponse(stdout: string) {
@@ -749,6 +762,42 @@ describe('collectMemorySnapshot', () => {
     // And the overall session memory equals the unique sum, not the
     // double-walked sum — this is the actual regression we care about.
     expect(snap.totalMemory).toBe((1024 + 512 + 256) * 1024)
+  })
+
+  it('attributes a workspace background service subtree without creating a terminal session', async () => {
+    mockPsResponse(['730 1 4.7 1536', '731 730 2.9 768'].join('\n'))
+    listBackgroundServicesMock.mockReturnValue([
+      {
+        serviceId: 'typescript-language-service',
+        serviceKind: 'typescript-language-service',
+        worktreeId: 'repo-7::/workspace/capacity',
+        pid: 730,
+        version: '7.2.4'
+      }
+    ])
+
+    const { collectMemorySnapshot } = await loadCollector()
+    const snapshot = await collectMemorySnapshot(emptyStore)
+
+    expect(snapshot.worktrees).toHaveLength(1)
+    expect(snapshot.worktrees[0]).toMatchObject({
+      worktreeId: 'repo-7::/workspace/capacity',
+      cpu: 7.6,
+      memory: 2304 * 1024,
+      sessions: [],
+      backgroundServices: [
+        {
+          serviceId: 'typescript-language-service',
+          serviceKind: 'typescript-language-service',
+          pid: 730,
+          version: '7.2.4',
+          cpu: 7.6,
+          memory: 2304 * 1024
+        }
+      ]
+    })
+    expect(snapshot.totalCpu).toBe(7.6)
+    expect(snapshot.totalMemory).toBe(2304 * 1024)
   })
 
   it('routes PTYs with no worktreeId into the orphan bucket', async () => {

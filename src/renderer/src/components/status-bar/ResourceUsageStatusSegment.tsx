@@ -2,6 +2,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
+  Braces,
   ChevronDown,
   ChevronRight,
   Globe,
@@ -39,6 +40,7 @@ import { getRepoExecutionHostId, parseExecutionHostId } from '../../../../shared
 import { mergeSnapshotAndSessions, UNATTRIBUTED_REPO_ID } from './mergeSnapshotAndSessions'
 import type {
   Metric,
+  UnifiedBackgroundServiceRow,
   UnifiedProjectGroup,
   UnifiedSessionRow,
   UnifiedWorktreeRow
@@ -435,6 +437,34 @@ function BrowserRow({ browser }: { browser: BrowserWorkspace }): React.JSX.Eleme
   )
 }
 
+function BackgroundServiceRow({
+  service
+}: {
+  service: UnifiedBackgroundServiceRow
+}): React.JSX.Element {
+  const label =
+    service.serviceKind === 'typescript-language-service'
+      ? service.version
+        ? translate(
+            'auto.components.status.bar.ResourceUsageStatusSegment.typescriptServiceVersion',
+            'TypeScript {{value0}} language service',
+            { value0: service.version }
+          )
+        : translate(
+            'auto.components.status.bar.ResourceUsageStatusSegment.typescriptService',
+            'TypeScript language service'
+          )
+      : service.serviceId
+  return (
+    <div className="flex items-center gap-2 pl-10 pr-3 py-1.5">
+      <Braces className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{label}</span>
+      <MetricPair cpu={service.cpu} memory={service.memory} size="small" />
+      <span className={ROW_TRAILING_GUTTER_CLS} aria-hidden />
+    </div>
+  )
+}
+
 // ─── Worktree row ───────────────────────────────────────────────────
 
 export function WorktreeRow({
@@ -458,7 +488,10 @@ export function WorktreeRow({
   onKillSession: (session: UnifiedSessionRow) => void
   navigateToTab: (tabId: string, paneKey: string | null) => void
 }): React.JSX.Element {
-  const hasResources = worktree.sessions.length > 0 || worktree.browsers.length > 0
+  const hasResources =
+    worktree.sessions.length > 0 ||
+    worktree.backgroundServices.length > 0 ||
+    worktree.browsers.length > 0
   // Why: synthetic buckets (orphan/unattributed) have no sidebar target to reveal; real and SSH-resolved worktrees stay navigable.
   const isSynthetic =
     worktree.worktreeId === ORPHAN_WORKTREE_ID || worktree.repoId === UNATTRIBUTED_REPO_ID
@@ -592,6 +625,10 @@ export function WorktreeRow({
             onNavigate={navigateToTab}
             onKill={onKillSession}
           />
+        ))}
+      {!isCollapsed &&
+        worktree.backgroundServices.map((service) => (
+          <BackgroundServiceRow key={service.serviceId} service={service} />
         ))}
       {!isCollapsed &&
         worktree.browsers.map((browser) => <BrowserRow key={browser.id} browser={browser} />)}
