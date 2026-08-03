@@ -31,6 +31,7 @@ import {
 } from './update-install-exit-watchdog'
 import { registerAutoUpdaterHandlers } from './updater-events'
 import { recordUpdaterLifecycle } from './updater-lifecycle-diagnostics'
+import { isAutoUpdateEnabled } from './updater-build-availability'
 import { getLinuxRootPackageType } from './linux-update-package-type'
 import {
   beginLinuxPackageInstallDiagnosticCapture,
@@ -1499,6 +1500,9 @@ function runBackgroundUpdateCheck(
 }
 
 export function checkForUpdates(): void {
+  if (!isAutoUpdateEnabled()) {
+    return
+  }
   // Why: span records only check launch (always Success), not outcome; dashboards must filter `updater.outcome === 'launched'`, not this span's success rate.
   void withUpdaterSpan({ stage: 'check' }, async (span) => {
     span.setAttribute('updater.outcome', 'launched')
@@ -1521,6 +1525,10 @@ function enableIncludePrerelease(): void {
 
 /** Menu-triggered check — delegates feedback to renderer toasts via userInitiated flag */
 export function checkForUpdatesFromMenu(options?: UpdateCheckOptions): void {
+  if (!isAutoUpdateEnabled()) {
+    sendStatus({ state: 'not-available', userInitiated: true })
+    return
+  }
   if (!app.isPackaged || is.dev) {
     sendStatus({ state: 'not-available', userInitiated: true })
     return
@@ -1660,6 +1668,9 @@ async function checkForLocalBuildFromMenu(): Promise<void> {
 }
 
 export async function listAvailableReleaseBuilds(channel: ReleaseChannel): Promise<ReleaseBuild[]> {
+  if (!isAutoUpdateEnabled()) {
+    throw new Error('Updates are disabled for this build.')
+  }
   return listReleaseBuilds(channel)
 }
 
@@ -1845,6 +1856,9 @@ export async function showLinuxPackage(): Promise<void> {
 }
 
 export function quitAndInstall(): void {
+  if (!isAutoUpdateEnabled()) {
+    return
+  }
   if (
     localBuildSelectionInProgress ||
     pinnedBuildSelectionInProgress ||
@@ -1997,6 +2011,10 @@ export function setupAutoUpdater(
   updateInstallMode = opts?.installMode ?? 'interactive'
   lastInstallDeferralVersion = { download: null, install: null }
 
+  if (!isAutoUpdateEnabled()) {
+    return
+  }
+
   const serveHandoffFailure = getServeUpdateHandoffFailure()
   if (serveHandoffFailure) {
     recordUpdaterLifecycle(
@@ -2128,6 +2146,9 @@ export function setupAutoUpdater(
 }
 
 export function downloadUpdate(): void {
+  if (!isAutoUpdateEnabled()) {
+    return
+  }
   if (localBuildSelectionInProgress || pinnedBuildSelectionInProgress || downloadInFlight) {
     return
   }
