@@ -23,6 +23,16 @@ vi.mock('./codex-auth-presence', () => ({
   probeCodexAuthPresence: vi.fn(() => 'present')
 }))
 
+vi.mock('./codex-backend-usage-client', () => ({
+  fetchCodexRateLimitsViaBackend: vi.fn().mockResolvedValue(null),
+  supplementCodexSessionWindow: vi.fn((limits) => limits)
+}))
+
+vi.mock('./codex-reset-credit-client', () => ({
+  consumeCodexRateLimitResetCreditFromBackend: vi.fn(),
+  supplementCodexRateLimitResetCredits: vi.fn((limits) => limits)
+}))
+
 import { fetchCodexRateLimits } from './codex-fetcher'
 
 function makeDisposable() {

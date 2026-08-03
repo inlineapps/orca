@@ -54,6 +54,7 @@ import type { ShellApi } from './api/shell-api'
 import type { SpeechApi } from './api/speech-api'
 import type { SshApi } from './api/ssh-api'
 import type { DiagnosticsApi, MemoryApi, StatsApi, TelemetryApi } from './api/telemetry-api'
+import type { TsserverApi } from './api/tsserver-api'
 import type { UiCommandEventApi } from './api/ui-command-event-api'
 import type { UiWindowApi } from './api/ui-window-api'
 import type { UpdaterApi } from './api/updater-api'
@@ -124,6 +125,7 @@ export type PreloadApi = {
   session: WorkspaceSessionApi['session']
   remoteWorkspace: WorkspaceSessionApi['remoteWorkspace']
   updater: UpdaterApi
+  tsserver: TsserverApi
   notebook: FilesystemApi['notebook']
   stats: StatsApi
   memory: MemoryApi
@@ -200,6 +202,7 @@ export type {
   MemoryApi,
   StatsApi
 } from './api/telemetry-api'
+export type { TsserverApi } from './api/tsserver-api'
 
 declare global {
   // oxlint-disable-next-line typescript-eslint/consistent-type-definitions -- declaration merging requires interface

@@ -64,6 +64,7 @@ describe('web preload API composition', () => {
       'developerPermissions',
       'computerUsePermissions',
       'updater',
+      'tsserver',
       'shell',
       'skills',
       'pty',

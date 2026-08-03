@@ -188,6 +188,8 @@ export function EditorConflictReviewSurface({
             }
             onSave={readOnly ? () => {} : (content) => handleSaveForFile(contentFile, content)}
             worktreeId={contentFile.worktreeId}
+            runtimeEnvironmentId={contentFile.runtimeEnvironmentId}
+            externalSshTargetId={contentFile.externalSshTargetId}
             markdownAnnotationsEnabled={false}
             conflictDecorationsEnabled={contentFile.conflict?.conflictStatus === 'unresolved'}
             readOnly={readOnly}

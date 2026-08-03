@@ -18,6 +18,11 @@ const {
   verifyPackagedNodePtyJobOwnership
 } = require('./scripts/verify-packaged-node-pty-job-ownership.cjs')
 const { verifySkillsCliRuntime } = require('./scripts/verify-skills-cli-runtime.cjs')
+const {
+  chmodBundledTypeScript,
+  createTypeScriptLanguageServiceResources,
+  createTypeScriptNativeResource
+} = require('./typescript-language-service-packaging.cjs')
 
 // Why: dev-channel builds must carry the *release* identity — same bundle id,
 // Developer ID signature, and notarization ticket — or Squirrel.Mac refuses to
@@ -89,7 +94,12 @@ const bundledPluginResources = {
 // from package directories where pnpm's symlink farm is absent. Copy the exact
 // runtime dependency closure to Resources/node_modules so bare require() calls
 // do not fall through to a developer checkout's node_modules.
-const commonExtraResources = [relayExtraResource, bundledPluginResources, skillFreshnessResources]
+const commonExtraResources = [
+  relayExtraResource,
+  bundledPluginResources,
+  skillFreshnessResources,
+  ...createTypeScriptLanguageServiceResources()
+]
 const macSpeechNativeResource = {
   from: 'node_modules/sherpa-onnx-darwin-${arch}',
   to: 'node_modules/sherpa-onnx-darwin-${arch}'
@@ -298,6 +308,7 @@ module.exports = {
     // Why: inspect electron-builder's real output so a broken extraResources
     // mapping fails packaging before bundled content reaches users.
     verifyPackagedPluginResources(resourcesDir)
+    chmodBundledTypeScript(resourcesDir, context.electronPlatformName)
     chmodUnixCliLaunchers(resourcesDir, context.electronPlatformName)
     chmodMacServeSimHelpers(resourcesDir, context.electronPlatformName)
     for (const filename of readdirSync(resourcesDir)) {
@@ -342,6 +353,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('win32'),
+      createTypeScriptNativeResource('win32'),
       winSpeechNativeResource,
       {
         from: 'resources/win32/bin/orca.cmd',
@@ -413,6 +425,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('darwin'),
+      createTypeScriptNativeResource('darwin'),
       macSpeechNativeResource,
       {
         from: 'resources/darwin/bin/orca',
@@ -481,6 +494,7 @@ module.exports = {
     extraResources: [
       ...commonExtraResources,
       ...createPackagedRuntimeNodeModuleResources('linux'),
+      createTypeScriptNativeResource('linux'),
       linuxSpeechNativeResource,
       {
         from: 'resources/linux/bin/orca-ide',
