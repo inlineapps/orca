@@ -31,6 +31,7 @@ const isMacRelease =
   process.env.ORCA_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
 const isLinuxArm64Release = process.env.ORCA_LINUX_ARM64_RELEASE === '1'
 const localBuildVersion = isMacRelease ? undefined : process.env.ORCA_LOCAL_BUILD_VERSION
+const inlineappsBuildVersion = process.env.ORCA_INLINEAPPS_BUILD_VERSION
 const devChannelBuildVersion = isMacHourly
   ? process.env.ORCA_HOURLY_BUILD_VERSION
   : isMacDaily
@@ -102,11 +103,13 @@ const winSpeechNativeResource = {
 module.exports = {
   appId,
   productName: 'Orca',
-  ...(devChannelBuildVersion
-    ? { extraMetadata: { version: devChannelBuildVersion } }
-    : localBuildVersion
-      ? { extraMetadata: { version: localBuildVersion } }
-      : {}),
+  ...(inlineappsBuildVersion
+    ? { extraMetadata: { version: inlineappsBuildVersion } }
+    : devChannelBuildVersion
+      ? { extraMetadata: { version: devChannelBuildVersion } }
+      : localBuildVersion
+        ? { extraMetadata: { version: localBuildVersion } }
+        : {}),
   directories: {
     buildResources: 'resources/build'
   },

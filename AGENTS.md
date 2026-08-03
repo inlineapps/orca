@@ -6,6 +6,13 @@ All UI work — layout, color, typography, spacing, component selection, UX beha
 
 Use the `$electron` skill and Playwright CDP for rendered Orca UI checks. Do not use computer-use for Orca UI validation.
 
+# Inlineapps Fork
+
+- `origin` is `inlineapps/orca`; `upstream` is `stablyai/orca`. Rebase topic commits onto `upstream/main`.
+- Keep upstream `productName`, `appId`, executable name, and user-data path so both builds reuse settings. Never run both builds simultaneously.
+- Fork releases compile out updater access. Do not restore upstream release feeds.
+- Release locally from clean `main`: `pnpm release:inlineapps:mac vX.Y.Z-inline.N`; use `--unsigned` only when Apple signing credentials are unavailable.
+
 # Style
 ## Concise/Brief Non-obviosu comments ONLY
   * DO NOT: be verbose, explain the obvious, walk through the code ("WHY not HOW")
