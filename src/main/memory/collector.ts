@@ -51,6 +51,7 @@ import {
   optionalCommitField,
   snapshotCommitFields
 } from './memory-snapshot-values'
+import { attributeWorkspaceBackgroundServices } from './workspace-background-service-memory'
 
 export type MemorySnapshotStore = Pick<Store, 'getRepo' | 'getWorktreeMeta'>
 
@@ -352,6 +353,8 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
     bucket.privateMemory += clampMemoryMetric(session.privateMemory)
     bucket.sessions.push(session)
   }
+
+  attributeWorkspaceBackgroundServices(store, processIndex, claimed, worktreeBuckets)
 
   const bucketList: WorktreeMemoryBucket[] = [...worktreeBuckets.values()]
   if (orphan.sessions.length > 0) {

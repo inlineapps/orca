@@ -18,6 +18,9 @@ import {
   installMonacoViewStateTracking,
   restoreMonacoViewState
 } from './monaco-view-state-persistence'
+import { toTsserverScriptKind } from './tsserver-monaco-mapping'
+import { installMonacoTsserverProviders } from './monaco-tsserver-providers'
+import { registerTsserverModel } from './monaco-tsserver-model-sync'
 
 // Why: binds a freshly created Monaco instance to the app; reads everything through refs so the callback identity stays stable across renders.
 export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
@@ -27,6 +30,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
     viewStateKey,
     viewStateId,
     worktreeId,
+    tsserverRootPath,
     autoHeight,
     autoHeightLineHeight,
     editorRef,
@@ -114,6 +118,20 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         endProgrammaticContentSync(filePath)
       }
 
+      let unregisterTsserverModel: (() => void) | null = null
+      const model = editorInstance.getModel()
+      const scriptKindName = toTsserverScriptKind(filePath, languageRef.current)
+      if (model && scriptKindName && tsserverRootPath && worktreeId) {
+        installMonacoTsserverProviders(monaco)
+        unregisterTsserverModel = registerTsserverModel({
+          model,
+          rootPath: tsserverRootPath,
+          filePath,
+          worktreeId,
+          scriptKindName
+        })
+      }
+
       setupCopy(editorInstance, monaco, filePath, propsRef)
       unregisterFileSearchSelectionRef.current?.()
       unregisterFileSearchSelectionRef.current = registerFileSearchSelectedTextProvider(() => {
@@ -180,6 +198,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
         conflictDecorationsRef.current?.clear()
         conflictDecorationsRef.current = null
         uninstallE2EProbe()
+        unregisterTsserverModel?.()
         editorRef.current = null
         setMountedEditor(null)
         setCommentPopover(null)
@@ -221,6 +240,7 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
       autoHeight,
       autoHeightLineHeight,
       worktreeId,
+      tsserverRootPath,
       editorRef,
       editorContainerRef,
       languageRef,
