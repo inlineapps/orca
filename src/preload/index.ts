@@ -6,6 +6,19 @@ import { glApi } from './gitlab'
 import type { AppIdentity } from '../shared/app-identity'
 import type { ComputerAwakeStatus } from '../shared/computer-awake-mode'
 import type {
+  TsserverCompletionDetails,
+  TsserverCompletionRequestArgs,
+  TsserverCompletions,
+  TsserverContentEdit,
+  TsserverFileLocationArgs,
+  TsserverFileSpan,
+  TsserverIpcResult,
+  TsserverQuickInfo,
+  TsserverReferenceSpan,
+  TsserverRootAvailability,
+  TsserverScriptKindName
+} from '../shared/tsserver-language-service'
+import type {
   DashboardRevealAgentArgs,
   DashboardSleepWorkspaceArgs,
   DashboardSnapshot,
@@ -2471,6 +2484,43 @@ const api = {
     openSetup: (args?: { id?: string }): Promise<unknown> =>
       ipcRenderer.invoke('computerUsePermissions:openSetup', args),
     reset: (): Promise<unknown> => ipcRenderer.invoke('computerUsePermissions:reset')
+  },
+
+  tsserver: {
+    probeRoot: (args: { rootPath: string }): Promise<TsserverRootAvailability> =>
+      ipcRenderer.invoke('tsserver:probeRoot', args),
+    openFile: (args: {
+      rootPath: string
+      worktreeId: string
+      file: string
+      fileContent: string
+      scriptKindName: TsserverScriptKindName
+    }): Promise<boolean> => ipcRenderer.invoke('tsserver:openFile', args),
+    updateFile: (args: {
+      rootPath: string
+      file: string
+      edits: TsserverContentEdit[]
+    }): Promise<boolean> => ipcRenderer.invoke('tsserver:updateFile', args),
+    closeFile: (args: { rootPath: string; file: string }): Promise<void> =>
+      ipcRenderer.invoke('tsserver:closeFile', args),
+    definition: (args: TsserverFileLocationArgs): Promise<TsserverIpcResult<TsserverFileSpan[]>> =>
+      ipcRenderer.invoke('tsserver:definition', args),
+    references: (
+      args: TsserverFileLocationArgs
+    ): Promise<TsserverIpcResult<TsserverReferenceSpan[]>> =>
+      ipcRenderer.invoke('tsserver:references', args),
+    quickinfo: (
+      args: TsserverFileLocationArgs
+    ): Promise<TsserverIpcResult<TsserverQuickInfo | null>> =>
+      ipcRenderer.invoke('tsserver:quickinfo', args),
+    completions: (
+      args: TsserverCompletionRequestArgs
+    ): Promise<TsserverIpcResult<TsserverCompletions | null>> =>
+      ipcRenderer.invoke('tsserver:completions', args),
+    completionDetails: (
+      args: TsserverFileLocationArgs & { entryName: string; source?: string; data?: unknown }
+    ): Promise<TsserverIpcResult<TsserverCompletionDetails | null>> =>
+      ipcRenderer.invoke('tsserver:completionDetails', args)
   },
 
   shell: {

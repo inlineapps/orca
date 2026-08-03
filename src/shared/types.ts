@@ -3898,6 +3898,13 @@ export type SessionMemory = UsageValues & {
   pid: number
 }
 
+export type WorkspaceBackgroundServiceMemory = UsageValues & {
+  serviceId: string
+  serviceKind: 'typescript-language-service'
+  pid: number
+  version?: string
+}
+
 /** The top-level cpu/memory are the sum of sessions. */
 export type WorktreeMemory = UsageValues & {
   worktreeId: string
@@ -3905,6 +3912,7 @@ export type WorktreeMemory = UsageValues & {
   repoId: string
   repoName: string
   sessions: SessionMemory[]
+  backgroundServices?: WorkspaceBackgroundServiceMemory[]
   /** Oldest-first memory samples (bytes) for this worktree's tracked subtrees. */
   history: number[]
 }
