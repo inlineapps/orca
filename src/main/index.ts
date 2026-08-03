@@ -142,6 +142,7 @@ import {
 import { configureRemoteServerUpdater } from './runtime/remote-server-updater'
 import type { UpdateCheckOptions } from '../shared/update-status-types'
 import { recordUpdaterLifecycle } from './updater-lifecycle-diagnostics'
+import { isAutoUpdateEnabled } from './updater-build-availability'
 import {
   installServeSupervisorDisconnectQuit,
   notifyServeSupervisorReady
@@ -1387,6 +1388,7 @@ function getSystemTrayOptions(): SystemTrayOptions | null {
     appIcon: store.getSettings().appIcon,
     isDevInstance: devInstanceIdentity.isDev,
     devInstanceLabel: devInstanceIdentity.devLabel,
+    autoUpdateEnabled: isAutoUpdateEnabled(),
     onOpen: showMainWindowFromTray,
     onOpenSettings: openSettingsFromSystemMenu,
     onCheckForUpdates: () => {
@@ -3110,6 +3112,7 @@ void app.whenReady().then(async () => {
 
   registerAppMenu({
     appMenuLabel: devInstanceIdentity.name,
+    autoUpdateEnabled: isAutoUpdateEnabled(),
     onCheckForUpdates: (options) => runUserInitiatedUpdateCheck(options),
     onBeforeReload: ({ ignoreCache, webContentsId }) => {
       if (mainWindow?.webContents.id === webContentsId) {
