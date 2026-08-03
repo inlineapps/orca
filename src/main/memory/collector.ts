@@ -31,14 +31,21 @@ import type {
   AppMemory,
   MemorySnapshot,
   SessionMemory,
+<<<<<<< HEAD
   WorktreeMemory
 } from '../../shared/process-stats-types'
+=======
+  WorkspaceBackgroundServiceMemory,
+  WorktreeMemory
+} from '../../shared/types'
+>>>>>>> a115a8fb8b (feat(editor): add TypeScript language service)
 import type { Store } from '../persistence'
 import { ORPHAN_WORKTREE_ID } from '../../shared/constants'
 import { listRegisteredPtys } from './pty-registry'
 import { enumerateWindowsProcessResources } from './windows-process-resource-collector'
 import { collectHostMemory, fallbackHostMemory } from './host-memory'
 import { getProcessMemoryMetric } from './process-memory-metric'
+import { listWorkspaceBackgroundServices } from './workspace-background-service-registry'
 
 export type MemorySnapshotStore = Pick<Store, 'getRepo' | 'getWorktreeMeta'>
 
@@ -302,6 +309,7 @@ type WorktreeBucket = {
   cpu: number
   memory: number
   sessions: SessionMemory[]
+  backgroundServices: WorkspaceBackgroundServiceMemory[]
 }
 
 function resolveWorktreeNames(
@@ -334,7 +342,16 @@ function makeEmptyBucket(
   repoId: string,
   repoName: string
 ): WorktreeBucket {
-  return { worktreeId, worktreeName, repoId, repoName, cpu: 0, memory: 0, sessions: [] }
+  return {
+    worktreeId,
+    worktreeName,
+    repoId,
+    repoName,
+    cpu: 0,
+    memory: 0,
+    sessions: [],
+    backgroundServices: []
+  }
 }
 
 // ─── Main collection path ───────────────────────────────────────────
@@ -402,6 +419,40 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
     bucket.cpu += session.cpu
     bucket.memory += session.memory
     bucket.sessions.push(session)
+  }
+
+  for (const service of listWorkspaceBackgroundServices()) {
+    let serviceCpu = 0
+    let serviceMemory = 0
+    for (const pid of collectSubtree(processIndex, service.pid)) {
+      if (claimed.has(pid)) {
+        continue
+      }
+      const row = processIndex.byPid.get(pid)
+      if (!row) {
+        continue
+      }
+      claimed.add(pid)
+      serviceCpu += row.cpu
+      serviceMemory += row.memory
+    }
+    const names = resolveWorktreeNames(service.worktreeId, store)
+    let bucket = worktreeBuckets.get(service.worktreeId)
+    if (!bucket) {
+      bucket = makeEmptyBucket(service.worktreeId, names.worktreeName, names.repoId, names.repoName)
+      worktreeBuckets.set(service.worktreeId, bucket)
+    }
+    const backgroundService: WorkspaceBackgroundServiceMemory = {
+      serviceId: service.serviceId,
+      serviceKind: service.serviceKind,
+      pid: service.pid,
+      cpu: clampNumber(serviceCpu),
+      memory: clampNumber(serviceMemory),
+      ...(service.version ? { version: service.version } : {})
+    }
+    bucket.cpu += backgroundService.cpu
+    bucket.memory += backgroundService.memory
+    bucket.backgroundServices.push(backgroundService)
   }
 
   const bucketList: WorktreeBucket[] = [...worktreeBuckets.values()]

@@ -9,6 +9,7 @@ import { registerFilesystemHandlers } from './filesystem'
 import type { CommitMessageAgentEnvironmentResolvers } from '../text-generation/commit-message-agent-environment'
 import { registerFilesystemWatcherHandlers } from './filesystem-watcher'
 import { registerUsageProviderHandlers } from './usage-provider-handlers'
+import { registerTsserverHandlers } from './tsserver'
 import { registerGitHubHandlers } from './github'
 import { registerGitLabHandlers } from './gitlab'
 import { registerHostedReviewHandlers } from './hosted-review'
@@ -212,6 +213,7 @@ export function registerCoreHandlers(
     registerFilesystemHandlers(store)
   }
   registerFilesystemWatcherHandlers()
+  registerTsserverHandlers(store)
   registerRuntimeHandlers(runtime)
   registerRuntimeEnvironmentHandlers(store)
   registerEphemeralVmHandlers(store, pluginService)

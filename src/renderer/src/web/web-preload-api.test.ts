@@ -770,6 +770,33 @@ describe('web browser-local port capability', () => {
   })
 })
 
+describe('web tsserver capability', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns explicit unavailable results without desktop IPC', async () => {
+    const { api } = await installApi('Linux')
+
+    await expect(api.tsserver.probeRoot({ rootPath: '/workspace' })).resolves.toEqual({
+      available: false,
+      reason: 'no-tsserver'
+    })
+    await expect(
+      api.tsserver.definition({
+        rootPath: '/workspace',
+        file: '/workspace/src/app.ts',
+        line: 7,
+        offset: 19
+      })
+    ).resolves.toEqual({ ok: false, reason: 'unavailable' })
+  })
+})
+
 function installClipboardImageBlob(blob: Blob): {
   getType: ReturnType<typeof vi.fn>
   read: ReturnType<typeof vi.fn>
