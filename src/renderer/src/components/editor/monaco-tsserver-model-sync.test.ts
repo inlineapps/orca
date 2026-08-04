@@ -72,6 +72,7 @@ describe('Monaco tsserver model sync', () => {
       rootPath: '/workspace',
       filePath: '/workspace/src/app.ts',
       worktreeId: 'repo::/workspace',
+      kind: 'file',
       scriptKindName: 'TS'
     })
     releases.push(release)
@@ -119,6 +120,88 @@ describe('Monaco tsserver model sync', () => {
     })
   })
 
+  it('leaves a path claimed by the file editor untouched by a diff pane', async () => {
+    const { model: fileModel } = createModel('file:///workspace/src/queue.ts', 'const retries = 4')
+    const { model: diffModel } = createModel(
+      'file:///workspace/src/queue.ts?diff=modified',
+      'const retries = 7'
+    )
+    releases.push(
+      registerTsserverModel({
+        model: fileModel,
+        rootPath: '/workspace',
+        filePath: '/workspace/src/queue.ts',
+        worktreeId: 'repo::/workspace',
+        scriptKindName: 'TS',
+        kind: 'file'
+      })
+    )
+    await getTsserverRegistration(fileModel)!.syncQueue
+
+    releases.push(
+      registerTsserverModel({
+        model: diffModel,
+        rootPath: '/workspace/',
+        filePath: '/workspace/src/queue.ts',
+        worktreeId: 'repo::/workspace',
+        scriptKindName: 'TS',
+        kind: 'diff'
+      })
+    )
+
+    expect(getTsserverRegistration(diffModel)).toBeNull()
+    expect(await requestTsserverModel(diffModel, 3, 9, api.definition)).toBeNull()
+    expect(api.openFile).toHaveBeenCalledTimes(1)
+    expect(api.openFile).toHaveBeenCalledWith(
+      expect.objectContaining({ fileContent: 'const retries = 4' })
+    )
+  })
+
+  it('evicts a diff registration when the file editor claims the same path', async () => {
+    const { model: diffModel } = createModel(
+      'file:///workspace/src/report.ts?diff=modified',
+      'const rows = 26'
+    )
+    const { model: fileModel } = createModel('file:///workspace/src/report.ts', 'const rows = 31')
+    releases.push(
+      registerTsserverModel({
+        model: diffModel,
+        rootPath: '/workspace',
+        filePath: '/workspace/src/report.ts',
+        worktreeId: 'repo::/workspace',
+        scriptKindName: 'TS',
+        kind: 'diff'
+      })
+    )
+    await getTsserverRegistration(diffModel)!.syncQueue
+
+    releases.push(
+      registerTsserverModel({
+        model: fileModel,
+        rootPath: '/workspace',
+        filePath: '/workspace/src/report.ts',
+        worktreeId: 'repo::/workspace',
+        scriptKindName: 'TS',
+        kind: 'file'
+      })
+    )
+    expect(getTsserverRegistration(diffModel)).toBeNull()
+    await getTsserverRegistration(fileModel)!.syncQueue
+
+    expect(api.closeFile).toHaveBeenCalledWith({
+      rootPath: '/workspace',
+      file: '/workspace/src/report.ts'
+    })
+    expect(api.openFile).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ fileContent: 'const rows = 31' })
+    )
+    // Why: a close landing after the reopen would leave tsserver with no buffer for the path.
+    expect(api.closeFile.mock.invocationCallOrder[0]).toBeLessThan(
+      api.openFile.mock.invocationCallOrder[1]
+    )
+  })
+
   it('reopens a model once when a crash lost open-file state', async () => {
     const { model } = createModel('file:///workspace/src/service.js', 'export const port = 53')
     api.definition
@@ -138,6 +221,7 @@ describe('Monaco tsserver model sync', () => {
       rootPath: '/workspace',
       filePath: '/workspace/src/service.js',
       worktreeId: 'repo::/workspace',
+      kind: 'file',
       scriptKindName: 'JS'
     })
     releases.push(release)
