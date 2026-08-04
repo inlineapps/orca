@@ -5,6 +5,11 @@ export type TypeScriptLanguageServiceStatus = {
   majorVersion?: string
 }
 
+/** Diff tabs attach their modified side to tsserver too, so the segment reports on them as well. */
+export function reportsTypeScriptLanguageService(mode: string | undefined): boolean {
+  return mode === 'edit' || mode === 'diff'
+}
+
 export function getTypeScriptLanguageServiceStatus(
   availability: TsserverRootAvailability | null
 ): TypeScriptLanguageServiceStatus {

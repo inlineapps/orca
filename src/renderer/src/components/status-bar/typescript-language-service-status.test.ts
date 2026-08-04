@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { getTypeScriptLanguageServiceStatus } from './typescript-language-service-status'
+import {
+  getTypeScriptLanguageServiceStatus,
+  reportsTypeScriptLanguageService
+} from './typescript-language-service-status'
+
+describe('reportsTypeScriptLanguageService', () => {
+  it('covers diff tabs alongside file editors', () => {
+    expect(reportsTypeScriptLanguageService('edit')).toBe(true)
+    expect(reportsTypeScriptLanguageService('diff')).toBe(true)
+    expect(reportsTypeScriptLanguageService('terminal')).toBe(false)
+    expect(reportsTypeScriptLanguageService(undefined)).toBe(false)
+  })
+})
 
 describe('getTypeScriptLanguageServiceStatus', () => {
   it('distinguishes bundled native and compatibility backends', () => {
