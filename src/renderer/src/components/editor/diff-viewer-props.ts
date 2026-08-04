@@ -14,6 +14,9 @@ export type DiffViewerProps = {
   // Why: optional because DiffViewer is also used by GitHubItemDialog for PR
   // review, where there is no local worktree to attach comments to.
   worktreeId?: string
+  // Why: language-service eligibility only — remote and runtime-hosted files have no local root.
+  runtimeEnvironmentId?: string | null
+  externalSshTargetId?: string
   onAddLineComment?: (args: {
     lineNumber: number
     startLine?: number
