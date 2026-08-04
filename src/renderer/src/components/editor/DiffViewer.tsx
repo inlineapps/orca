@@ -9,10 +9,11 @@ import { useContextualCopySetup } from './useContextualCopySetup'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
 import { DiffCommentPopover } from '../diff-comments/DiffCommentPopover'
+import { getDiffCommentPopoverLeft } from '../diff-comments/diff-comment-popover-position'
 import {
-  getDiffCommentPopoverLeft,
-  getDiffCommentPopoverTop
-} from '../diff-comments/diff-comment-popover-position'
+  useDiffCommentPopoverPosition,
+  type DiffCommentPopoverState
+} from './useDiffCommentPopoverPosition'
 import { applyDiffEditorLineNumberOptions } from './diff-editor-line-number-options'
 import type { DiffComment } from '../../../../shared/types'
 import { isDiffComment } from '@/lib/diff-comment-compat'
@@ -27,6 +28,7 @@ import { buildDiffEditorWordWrapOptions } from './diff-editor-word-wrap-options'
 import { useDiffEditorRegistration } from './diff-navigation-context'
 import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-state'
 import { monacoFindOptions } from './monaco-find-options'
+import { useDiffTsserverModel } from './useDiffTsserverModel'
 
 export default function DiffViewer({
   modelKey,
@@ -40,6 +42,8 @@ export default function DiffViewer({
   sideBySide,
   editable,
   worktreeId,
+  runtimeEnvironmentId,
+  externalSshTargetId,
   onAddLineComment,
   commentableLineNumbers,
   addLineCommentLabel,
@@ -75,13 +79,16 @@ export default function DiffViewer({
   const diffBodyRef = useRef<HTMLDivElement | null>(null)
   const lineNumberOptionsSubRef = useRef<{ dispose: () => void } | null>(null)
   const [modifiedEditor, setModifiedEditor] = useState<editor.ICodeEditor | null>(null)
-  const [popover, setPopover] = useState<{
-    lineNumber: number
-    startLine?: number
-    top: number
-    left?: number
-    lineHeight: number
-  } | null>(null)
+  const [popover, setPopover] = useState<DiffCommentPopoverState | null>(null)
+
+  useDiffTsserverModel({
+    modifiedEditor,
+    language,
+    relativePath,
+    worktreeId,
+    runtimeEnvironmentId,
+    externalSshTargetId
+  })
 
   const renderLimit = useMemo(
     () => largeDiffRenderLimit ?? getLargeDiffRenderLimit({ originalContent, modifiedContent }),
@@ -126,33 +133,12 @@ export default function DiffViewer({
     onPendingScrollConsumed: () => setScrollToDiffCommentId(null)
   })
 
-  useEffect(() => {
-    if (!modifiedEditor || !popover) {
-      return
-    }
-    const update = (): void => {
-      const lineHeight = modifiedEditor.getOption(monaco.editor.EditorOption.lineHeight)
-      const top = getDiffCommentPopoverTop(modifiedEditor, popover.lineNumber, lineHeight)
-      if (top == null) {
-        setPopover(null)
-        return
-      }
-      const left = getDiffCommentPopoverLeft(modifiedEditor, diffBodyRef.current)
-      setPopover((prev) =>
-        prev ? { ...prev, top, left: left == null ? prev.left : left, lineHeight } : prev
-      )
-    }
-    const scrollSub = modifiedEditor.onDidScrollChange(update)
-    const contentSub = modifiedEditor.onDidContentSizeChange(update)
-    const layoutSub = modifiedEditor.onDidLayoutChange(update)
-    return () => {
-      scrollSub.dispose()
-      contentSub.dispose()
-      layoutSub.dispose()
-    }
-    // Why: depend on popover.lineNumber (not the whole object) so the effect doesn't re-subscribe on every top update.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modifiedEditor, popover?.lineNumber])
+  useDiffCommentPopoverPosition({
+    modifiedEditor,
+    popoverLineNumber: popover?.lineNumber ?? null,
+    diffBodyRef,
+    setPopover
+  })
 
   // Why: center the first diff from a dedicated effect (not handleMount) so it runs after the decorator's view zones, which would otherwise shift content downward.
   const didAutoScrollFirstDiffRef = useRef(false)
