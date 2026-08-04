@@ -7,7 +7,10 @@ import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-e
 import { getMonacoTsserverRoot } from '@/components/editor/monaco-tsserver-eligibility'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
-import { getTypeScriptLanguageServiceStatus } from './typescript-language-service-status'
+import {
+  getTypeScriptLanguageServiceStatus,
+  reportsTypeScriptLanguageService
+} from './typescript-language-service-status'
 
 const STATUS_REFRESH_MS = 2_000
 
@@ -20,7 +23,7 @@ export function TypeScriptLanguageServiceStatusSegment({
     (state) => state.openFiles.find((file) => file.id === state.activeFileId) ?? null
   )
   const rootPath = useAppStore((state) => {
-    if (!activeFile || activeFile.mode !== 'edit') {
+    if (!activeFile || !reportsTypeScriptLanguageService(activeFile.mode)) {
       return null
     }
     const executionHostId = getResolvedExecutionHostIdForWorktree(state, activeFile.worktreeId)
