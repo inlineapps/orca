@@ -4,10 +4,15 @@ import type {
   TsserverIpcResult,
   TsserverScriptKindName
 } from '../../../../shared/tsserver-language-service'
+import { normalizeRuntimePathForComparison } from '../../../../shared/cross-platform-path'
 import { toTsserverContentEdits } from './tsserver-monaco-mapping'
+
+/** Which surface owns the buffer: a file editor tab or a diff pane's modified side. */
+export type TsserverRegistrationKind = 'file' | 'diff'
 
 export type TsserverModelRegistration = {
   key: string
+  kind: TsserverRegistrationKind
   model: Monaco.editor.ITextModel
   rootPath: string
   filePath: string
@@ -39,6 +44,7 @@ export function registerTsserverModel(args: {
   filePath: string
   worktreeId: string
   scriptKindName: TsserverScriptKindName
+  kind: TsserverRegistrationKind
 }): () => void {
   const key = args.model.uri.toString()
   const existing = registrations.get(key)
@@ -47,13 +53,22 @@ export function registerTsserverModel(args: {
     return () => releaseRegistration(existing)
   }
 
+  // Why: tsserver holds one buffer per path, so a second model for the same file would clobber the
+  // first one's edits. The file editor always wins; a diff pane only attaches to an unclaimed path.
+  const owner = findRegistrationForPath(pathOwnershipKey(args.rootPath, args.filePath))
+  if (owner && (args.kind === 'diff' || owner.kind === 'file')) {
+    return () => undefined
+  }
+  const evicted = owner ? disposeRegistration(owner) : null
+
   const registration: TsserverModelRegistration = {
     ...args,
     key,
     refCount: 1,
     disposed: false,
     available: false,
-    syncQueue: openModel(args).catch(() => false),
+    // Why: chain past the evicted registration's closeFile, else its close lands after this open.
+    syncQueue: (evicted ? evicted.then(() => openModel(args)) : openModel(args)).catch(() => false),
     contentSubscription: null
   }
   registration.contentSubscription = args.model.onDidChangeContent((event) => {
@@ -186,20 +201,43 @@ function releaseRegistration(registration: TsserverModelRegistration): void {
   if (registration.refCount > 0 || registration.disposed) {
     return
   }
+  void disposeRegistration(registration)
+}
+
+function disposeRegistration(registration: TsserverModelRegistration): Promise<void> {
   registration.disposed = true
   registration.contentSubscription?.dispose()
   registrations.delete(registration.key)
-  void registration.syncQueue
+  const closed = registration.syncQueue
     .finally(() =>
       window.api.tsserver.closeFile({
         rootPath: registration.rootPath,
         file: registration.filePath
       })
     )
+    .then(() => undefined)
     .catch(() => undefined)
   if (registration.available) {
+    registration.available = false
     availabilityChanged?.()
   }
+  return closed
+}
+
+function pathOwnershipKey(rootPath: string, filePath: string): string {
+  return JSON.stringify([
+    normalizeRuntimePathForComparison(rootPath),
+    normalizeRuntimePathForComparison(filePath)
+  ])
+}
+
+function findRegistrationForPath(pathKey: string): TsserverModelRegistration | null {
+  for (const registration of registrations.values()) {
+    if (pathOwnershipKey(registration.rootPath, registration.filePath) === pathKey) {
+      return registration
+    }
+  }
+  return null
 }
 
 function setRegistrationAvailability(
