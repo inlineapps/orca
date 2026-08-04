@@ -416,7 +416,8 @@ export default function MonacoEditor({
           rootPath: tsserverRootPath,
           filePath,
           worktreeId,
-          scriptKindName
+          scriptKindName,
+          kind: 'file'
         })
       }
 
