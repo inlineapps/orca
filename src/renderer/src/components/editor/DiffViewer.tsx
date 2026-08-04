@@ -30,6 +30,7 @@ import { useDiffEditorRegistration } from './diff-navigation-context'
 import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-state'
 import { monacoFindOptions } from './monaco-find-options'
 import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
+import { useDiffTsserverModel } from './useDiffTsserverModel'
 
 export default function DiffViewer({
   modelKey,
@@ -43,6 +44,8 @@ export default function DiffViewer({
   sideBySide,
   editable,
   worktreeId,
+  runtimeEnvironmentId,
+  externalSshTargetId,
   onAddLineComment,
   commentableLineNumbers,
   addLineCommentLabel,
@@ -82,6 +85,15 @@ export default function DiffViewer({
     diffWordWrapRef.current = diffWordWrap
   }, [diffWordWrap])
   const [modifiedEditor, setModifiedEditor] = useState<editor.ICodeEditor | null>(null)
+
+  useDiffTsserverModel({
+    modifiedEditor,
+    language,
+    relativePath,
+    worktreeId,
+    runtimeEnvironmentId,
+    externalSshTargetId
+  })
 
   const renderLimit = useMemo(
     () => largeDiffRenderLimit ?? getLargeDiffRenderLimit({ originalContent, modifiedContent }),

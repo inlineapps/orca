@@ -156,7 +156,8 @@ export function useMonacoEditorMount(params: MonacoEditorMountParams): OnMount {
           rootPath: tsserverRootPath,
           filePath,
           worktreeId,
-          scriptKindName
+          scriptKindName,
+          kind: 'file'
         })
       }
 
