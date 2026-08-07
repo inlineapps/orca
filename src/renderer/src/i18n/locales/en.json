@@ -2031,7 +2031,25 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Orca workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Orca workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "asana": {
+          "switchWorkspaceError": "Failed to switch Asana workspace.",
+          "searchPlaceholder": "Search Asana tasks...",
+          "clearSearch": "Clear search",
+          "refresh": "Refresh Asana tasks",
+          "connectTitle": "Connect your Asana account",
+          "connectDescription": "Browse assigned tasks, search your workspaces, and start linked workspaces from Asana.",
+          "addAccess": "Add Asana access",
+          "tasksTitle": "Asana tasks",
+          "shown": "{{value0}} shown",
+          "emptyTitle": "No Asana tasks found",
+          "emptySearch": "Try a different search.",
+          "emptyAssigned": "No open tasks are assigned to you in this workspace.",
+          "filterProjectPlaceholder": "Filter tasks in this project...",
+          "shownCapped": "first {{value0}} shown",
+          "emptyProject": "No tasks in this project match the current filters."
+        },
+        "asanaProvider": "Asana"
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -4525,7 +4543,8 @@
           "0ccba862b8": "Open GitHub tasks",
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
-          "artifacts": "Artifacts"
+          "artifacts": "Artifacts",
+          "openAsanaTasks": "Open Asana tasks"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -7625,7 +7644,13 @@
           "integrationsHint": "Credentials for all providers also live under",
           "integrationsLink": "Integrations",
           "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
-          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks."
+          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.",
+          "connectAsanaTitle": "Connect Asana",
+          "connectAsanaDescription": "Add a personal access token to browse assigned tasks and search your workspaces.",
+          "manageAsana": "Manage access",
+          "addAsana": "Add Asana access",
+          "asanaLabel": "Asana",
+          "asanaDescription": "Connect Asana and show assigned tasks in Tasks."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",
@@ -13134,7 +13159,7 @@
             "list_end": ", and ",
             "list_pair": " and ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "issues available as tasks · add Linear or Jira if your team plans work there",
+            "code_host_tasks_summary": "issues available as tasks · add Linear, Jira, or Asana if your team plans work there",
             "code_host_tasks_caption": "Your code host's issues also work as tasks.",
             "review_step_title": "See PR status while agents work",
             "review_step_description": "Connect a review provider so Orca can show PR or MR status, checks, and reviews.",
@@ -15176,6 +15201,53 @@
           "updating": "Updating…",
           "update": "Update shared content"
         }
+      },
+      "AsanaTaskList": {
+        "completed": "Completed",
+        "open": "Open",
+        "due": "Due",
+        "startWorkspace": "Start workspace",
+        "openInAsana": "Open in Asana",
+        "dueDate": "Due {{value0}}",
+        "noSection": "No section"
+      },
+      "AsanaTaskWorkspace": {
+        "asanaTasks": "Asana tasks",
+        "openInAsana": "Open in Asana",
+        "completed": "Completed",
+        "open": "Open",
+        "noDescription": "No task description.",
+        "assignedTo": "Assigned to {{value0}}",
+        "due": "Due {{value0}}",
+        "projectCount": "{{value0}} projects",
+        "startWorkspace": "Start workspace"
+      },
+      "AsanaConnectDialog": {
+        "connectionFailed": "Connection failed",
+        "title": "Connect Asana",
+        "description": "Use an Asana personal access token to browse assigned tasks and start workspaces.",
+        "tokenLabel": "Personal access token",
+        "remoteStorage": "Stored encrypted on the selected runtime.",
+        "localStorage": "Stored encrypted in Orca local credentials.",
+        "cancel": "Cancel",
+        "connecting": "Connecting...",
+        "connect": "Connect"
+      },
+      "AsanaProjectPicker": {
+        "assigned": "My tasks",
+        "searchPlaceholder": "Search projects...",
+        "empty": "No projects found.",
+        "projects": "Projects"
+      },
+      "AsanaTaskFilterMenu": {
+        "trigger": "Filter",
+        "title": "Filters",
+        "clear": "Clear",
+        "incomplete": "Incomplete tasks",
+        "completed": "Completed tasks",
+        "onlyMine": "Only my tasks",
+        "dueThisWeek": "Due this week",
+        "dueNextWeek": "Due next week"
       }
     },
     "i18n": {

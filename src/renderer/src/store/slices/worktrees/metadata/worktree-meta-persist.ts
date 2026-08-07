@@ -4,6 +4,8 @@ import {
   getActiveRuntimeTarget
 } from '../../../../runtime/runtime-rpc-client'
 import {
+  ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+  ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE,
   TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY,
   WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY
 } from '../../../../../../shared/protocol-version'
@@ -33,6 +35,17 @@ export async function persistWorktreeMeta(
       target.environmentId,
       WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
       'Update the remote runtime to change this workspace’s linked issue'
+    )
+  }
+  if (
+    target.kind === 'environment' &&
+    (updates.linkedWorkItem?.provider === 'asana' ||
+      updates.linkedTaskSourceContext?.provider === 'asana')
+  ) {
+    await assertRuntimeEnvironmentCapability(
+      target.environmentId,
+      ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+      ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE
     )
   }
   // task-source-context.v1 is a sound proxy for the Linear keys: #5322 added them
