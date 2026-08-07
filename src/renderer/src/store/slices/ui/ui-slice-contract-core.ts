@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand'
 import type { AppState } from '../../types'
 import type { GitHubWorkItem } from '../../../../../shared/github/work-item-types'
 import type { GitLabWorkItem } from '../../../../../shared/gitlab-types'
+import type { AsanaTask } from '../../../../../shared/asana-types'
 import type { JiraIssue } from '../../../../../shared/jira-types'
 import type { LinearIssue } from '../../../../../shared/linear/issue-types'
 import type { TaskProvider } from '../../../../../shared/task-providers'
@@ -64,6 +65,8 @@ export type TaskPageData = {
   openLinearSourceContext?: TaskSourceContext | null
   openJiraIssue?: JiraIssue
   openJiraSourceContext?: TaskSourceContext | null
+  openAsanaTask?: AsanaTask
+  openAsanaSourceContext?: TaskSourceContext | null
 }
 
 export type NewWorkspaceDraft = {
@@ -78,7 +81,7 @@ export type NewWorkspaceDraft = {
   note: string
   attachments: string[]
   linkedWorkItem: {
-    provider?: 'github' | 'gitlab' | 'linear' | 'jira'
+    provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'asana'
     type: 'issue' | 'pr' | 'mr'
     number: number
     title: string
@@ -86,6 +89,8 @@ export type NewWorkspaceDraft = {
     linearIdentifier?: string
     linearBranchName?: string
     jiraIdentifier?: string
+    asanaIdentifier?: string
+    asanaWorkspaceGid?: string
     repoId?: string
   } | null
   /** Preserve where provider data came from, separately from the host chosen to run the workspace. */

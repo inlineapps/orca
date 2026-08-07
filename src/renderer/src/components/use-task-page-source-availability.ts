@@ -30,6 +30,8 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
     selectedLinearWorkspace,
     selectedJiraSiteId,
     selectedJiraSite,
+    selectedAsanaWorkspaceGid,
+    selectedAsanaWorkspace,
     taskSource,
     runtimePreflightStatusByHostId,
     taskSourceRepoContexts,
@@ -138,8 +140,30 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
   const jiraTaskSourceScopeKey = jiraTaskSourceContext
     ? getTaskSourceCacheScope(jiraTaskSourceContext)
     : providerRuntimeContextKey
+  const asanaTaskSourceContext = useMemo(
+    () =>
+      normalizeTaskSourceContext({
+        provider: 'asana',
+        projectId: fallbackTaskSourceProjectId,
+        hostId: accountBackedTaskSourceHostId,
+        providerIdentity: {
+          provider: 'asana',
+          workspaceGid: selectedAsanaWorkspaceGid ?? null
+        },
+        accountLabel: selectedAsanaWorkspace?.name ?? null
+      }),
+    [
+      accountBackedTaskSourceHostId,
+      fallbackTaskSourceProjectId,
+      selectedAsanaWorkspace,
+      selectedAsanaWorkspaceGid
+    ]
+  )
+  const asanaTaskSourceScopeKey = asanaTaskSourceContext
+    ? getTaskSourceCacheScope(asanaTaskSourceContext)
+    : providerRuntimeContextKey
   const accountBackedTaskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (taskSource !== 'linear' && taskSource !== 'jira') {
+    if (taskSource !== 'linear' && taskSource !== 'jira' && taskSource !== 'asana') {
       return []
     }
     const host = hostRegistryById.get(accountBackedTaskSourceHostId)
@@ -155,6 +179,8 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
     linearListInvalidationVersionForSource: typeof linearListInvalidationVersionForSource
     jiraTaskSourceContext: typeof jiraTaskSourceContext
     jiraTaskSourceScopeKey: typeof jiraTaskSourceScopeKey
+    asanaTaskSourceContext: typeof asanaTaskSourceContext
+    asanaTaskSourceScopeKey: typeof asanaTaskSourceScopeKey
     accountBackedTaskSourceHostAvailability: typeof accountBackedTaskSourceHostAvailability
   }
   nextModel.getTaskPickerRepoHostLabel = getTaskPickerRepoHostLabel
@@ -165,6 +191,8 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
   nextModel.linearListInvalidationVersionForSource = linearListInvalidationVersionForSource
   nextModel.jiraTaskSourceContext = jiraTaskSourceContext
   nextModel.jiraTaskSourceScopeKey = jiraTaskSourceScopeKey
+  nextModel.asanaTaskSourceContext = asanaTaskSourceContext
+  nextModel.asanaTaskSourceScopeKey = asanaTaskSourceScopeKey
   nextModel.accountBackedTaskSourceHostAvailability = accountBackedTaskSourceHostAvailability
   return nextModel
 }

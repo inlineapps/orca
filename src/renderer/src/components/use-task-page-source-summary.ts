@@ -24,6 +24,7 @@ export function useTaskPageSourceSummary(model: TaskPageSourceAvailabilityPrelud
     selectedRepos,
     selectedLinearWorkspace,
     selectedJiraSite,
+    selectedAsanaWorkspace,
     sourceOptions,
     taskSource,
     runtimePreflightStatusByHostId,
@@ -100,6 +101,13 @@ export function useTaskPageSourceSummary(model: TaskPageSourceAvailabilityPrelud
           sourceCount: 1,
           hostLabelById,
           hostAvailability: accountAvailability
+        }) ?? undefined,
+      asana:
+        getTaskSourceAvailabilityNotice({
+          providerLabel: labelFor('asana'),
+          sourceCount: 1,
+          hostLabelById,
+          hostAvailability: accountAvailability
         }) ?? undefined
     }
   }, [
@@ -121,7 +129,7 @@ export function useTaskPageSourceSummary(model: TaskPageSourceAvailabilityPrelud
       providerLabel,
       repoContexts: taskSourceRepoContexts,
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       accountHostId: accountBackedTaskSourceHostId,
@@ -129,9 +137,11 @@ export function useTaskPageSourceSummary(model: TaskPageSourceAvailabilityPrelud
       selectedRepoCount: selectedRepos.length,
       linearWorkspaceName:
         selectedLinearWorkspace?.organizationName ?? selectedLinearWorkspace?.id ?? null,
-      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null
+      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null,
+      asanaWorkspaceName: selectedAsanaWorkspace?.name ?? null
     })
   }, [
+    selectedAsanaWorkspace,
     selectedJiraSite,
     selectedLinearWorkspace,
     selectedRepos.length,
@@ -149,11 +159,11 @@ export function useTaskPageSourceSummary(model: TaskPageSourceAvailabilityPrelud
     return getTaskSourceAvailabilityNotice({
       providerLabel,
       sourceCount:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? 1
           : Math.max(1, taskSourceRepoContexts.length),
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       hostLabelById

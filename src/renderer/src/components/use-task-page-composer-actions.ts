@@ -1,7 +1,8 @@
-import type { TaskPageJiraListEffectsModel } from './use-task-page-jira-list-effects'
+import type { TaskPageAsanaViewStateModel } from './use-task-page-asana-view-state'
 import { useCallback } from 'react'
 import type { LinearIssue } from '../../../shared/linear/issue-types'
 import type { LinearWorkspaceSelection } from '../../../shared/linear/workspace-types'
+import type { AsanaTask } from '../../../shared/asana-types'
 import type { JiraIssue } from '../../../shared/jira-types'
 import { buildLinearIssueLinkedWorkItem } from '@/lib/linear-linked-work-item'
 import { getLinearIssueWorkspaceName } from '../../../shared/workspace-name'
@@ -12,8 +13,8 @@ import { translate } from '@/i18n/i18n'
 import { bindTaskPageJiraItemSourceContext } from './task-page-jira-item-source-context'
 import type { LinkedWorkItemSummary } from '@/lib/new-workspace'
 import { shouldHideTaskPageListChrome } from '@/components/task-page-list-chrome-visibility'
-import { getJiraIssueWorkspaceSeed } from './task-page-source-context'
-export function useTaskPageComposerActions(model: TaskPageJiraListEffectsModel) {
+import { getAsanaTaskWorkspaceSeed, getJiraIssueWorkspaceSeed } from './task-page-source-context'
+export function useTaskPageComposerActions(model: TaskPageAsanaViewStateModel) {
   const {
     setTaskResumeState,
     openModal,
@@ -26,6 +27,8 @@ export function useTaskPageComposerActions(model: TaskPageJiraListEffectsModel) 
     taskSource,
     linearTaskSourceContext,
     jiraTaskSourceContext,
+    asanaTaskSourceContext,
+    selectedAsanaTask,
     gitlabDialogItem,
     dialogWorkItem,
     selectedLinearIssue,
@@ -228,11 +231,38 @@ export function useTaskPageComposerActions(model: TaskPageJiraListEffectsModel) 
     },
     [openComposerForJiraItem]
   )
+  const openComposerForAsanaTask = useCallback(
+    (task: AsanaTask): void => {
+      const linkedWorkItem: LinkedWorkItemSummary = {
+        type: 'issue',
+        provider: 'asana',
+        number: 0,
+        title: task.name,
+        url: task.permalinkUrl,
+        asanaIdentifier: task.gid
+      }
+      openModal('new-workspace-composer', {
+        linkedWorkItem,
+        taskSourceContext: asanaTaskSourceContext,
+        prefilledName: getAsanaTaskWorkspaceSeed(task),
+        telemetrySource: 'sidebar'
+      })
+    },
+    [asanaTaskSourceContext, openModal]
+  )
+  const handleUseAsanaTask = useCallback(
+    (task: AsanaTask): void => {
+      useAppStore.getState().recordFeatureInteraction('asana-tasks')
+      openComposerForAsanaTask(task)
+    },
+    [openComposerForAsanaTask]
+  )
   const taskPageListChromeHidden = shouldHideTaskPageListChrome({
     taskSource,
     hasGitHubDetail: Boolean(dialogWorkItem),
     hasGitLabDetail: Boolean(gitlabDialogItem),
     hasJiraDetail: Boolean(selectedJiraIssue),
+    hasAsanaDetail: Boolean(selectedAsanaTask),
     hasLinearIssueDetail: Boolean(selectedLinearIssue),
     hasLinearProjectContext: Boolean(selectedLinearProject),
     hasLinearViewContext: Boolean(selectedLinearCustomView)
@@ -247,6 +277,7 @@ export function useTaskPageComposerActions(model: TaskPageJiraListEffectsModel) 
     handleLinearAccessConnected: typeof handleLinearAccessConnected
     openComposerForJiraItem: typeof openComposerForJiraItem
     handleUseJiraItem: typeof handleUseJiraItem
+    handleUseAsanaTask: typeof handleUseAsanaTask
     taskPageListChromeHidden: typeof taskPageListChromeHidden
   }
   nextModel.openComposerForLinearItem = openComposerForLinearItem
@@ -258,6 +289,7 @@ export function useTaskPageComposerActions(model: TaskPageJiraListEffectsModel) 
   nextModel.handleLinearAccessConnected = handleLinearAccessConnected
   nextModel.openComposerForJiraItem = openComposerForJiraItem
   nextModel.handleUseJiraItem = handleUseJiraItem
+  nextModel.handleUseAsanaTask = handleUseAsanaTask
   nextModel.taskPageListChromeHidden = taskPageListChromeHidden
   return nextModel
 }

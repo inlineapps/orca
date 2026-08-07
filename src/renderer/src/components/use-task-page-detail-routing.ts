@@ -6,12 +6,14 @@ import { useAppStore } from '@/store'
 import { useShallow } from 'zustand/react/shallow'
 import { findTaskPageLinearIssue } from '@/components/task-page-cache-selectors'
 import { findTaskPageJiraIssue } from '@/components/task-page-jira-cache-selectors'
+import type { AsanaTask } from '../../../shared/asana-types'
 export function useTaskPageDetailRouting(model: TaskPageGitHubIssueDraftModel) {
   const {
     pageData,
     openTaskPage,
     linearTaskSourceContext,
     jiraTaskSourceContext,
+    asanaTaskSourceContext,
     setDialogWorkItem
   } = model
   const [selectedLinearIssueIdState, setSelectedLinearIssueId] = useState<string | null>(null)
@@ -167,6 +169,28 @@ export function useTaskPageDetailRouting(model: TaskPageGitHubIssueDraftModel) {
     setSelectedJiraIssueKey(issue?.key ?? null)
     setSelectedJiraIssueFallback(issue)
   }, [])
+  const [selectedAsanaTaskGid, setSelectedAsanaTaskGid] = useState<string | null>(null)
+  const [selectedAsanaTaskFallback, setSelectedAsanaTaskFallback] = useState<AsanaTask | null>(null)
+
+  const setSelectedAsanaTask = useCallback((task: AsanaTask | null) => {
+    setSelectedAsanaTaskGid(task?.gid ?? null)
+    setSelectedAsanaTaskFallback(task)
+  }, [])
+
+  const openAsanaDetailPage = useCallback(
+    (task: AsanaTask) => {
+      openTaskPage(
+        {
+          taskSource: 'asana',
+          openAsanaTask: task,
+          openAsanaSourceContext: asanaTaskSourceContext ?? null
+        },
+        { recordTasksInteraction: false }
+      )
+    },
+    [asanaTaskSourceContext, openTaskPage]
+  )
+
   const openJiraDetailPage = useCallback(
     (issue: JiraIssue) => {
       openTaskPage(
@@ -183,7 +207,6 @@ export function useTaskPageDetailRouting(model: TaskPageGitHubIssueDraftModel) {
     [jiraTaskSourceContext, openTaskPage]
   )
 
-  // Linear tab state
   const nextModel = model as typeof model & {
     selectedLinearIssueId: typeof selectedLinearIssueId
     setSelectedLinearIssueId: typeof setSelectedLinearIssueId
@@ -210,6 +233,12 @@ export function useTaskPageDetailRouting(model: TaskPageGitHubIssueDraftModel) {
     jiraDetailSourceContext: typeof jiraDetailSourceContext
     setSelectedJiraIssue: typeof setSelectedJiraIssue
     openJiraDetailPage: typeof openJiraDetailPage
+    selectedAsanaTaskGid: typeof selectedAsanaTaskGid
+    setSelectedAsanaTaskGid: typeof setSelectedAsanaTaskGid
+    selectedAsanaTaskFallback: typeof selectedAsanaTaskFallback
+    setSelectedAsanaTaskFallback: typeof setSelectedAsanaTaskFallback
+    setSelectedAsanaTask: typeof setSelectedAsanaTask
+    openAsanaDetailPage: typeof openAsanaDetailPage
   }
   nextModel.selectedLinearIssueId = selectedLinearIssueId
   nextModel.setSelectedLinearIssueId = setSelectedLinearIssueId
@@ -236,6 +265,12 @@ export function useTaskPageDetailRouting(model: TaskPageGitHubIssueDraftModel) {
   nextModel.jiraDetailSourceContext = jiraDetailSourceContext
   nextModel.setSelectedJiraIssue = setSelectedJiraIssue
   nextModel.openJiraDetailPage = openJiraDetailPage
+  nextModel.selectedAsanaTaskGid = selectedAsanaTaskGid
+  nextModel.setSelectedAsanaTaskGid = setSelectedAsanaTaskGid
+  nextModel.selectedAsanaTaskFallback = selectedAsanaTaskFallback
+  nextModel.setSelectedAsanaTaskFallback = setSelectedAsanaTaskFallback
+  nextModel.setSelectedAsanaTask = setSelectedAsanaTask
+  nextModel.openAsanaDetailPage = openAsanaDetailPage
   return nextModel
 }
 export type TaskPageDetailRoutingModel = ReturnType<typeof useTaskPageDetailRouting>
