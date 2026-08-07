@@ -29,11 +29,20 @@ export type JiraTaskProviderIdentity = {
   projectKey?: string | null
 }
 
+export type AsanaTaskProviderIdentity = {
+  provider: 'asana'
+  workspaceGid?: string | null
+  workspaceName?: string | null
+  projectGid?: string | null
+  projectName?: string | null
+}
+
 export type TaskProviderIdentity =
   | GitHubTaskProviderIdentity
   | GitLabTaskProviderIdentity
   | LinearTaskProviderIdentity
   | JiraTaskProviderIdentity
+  | AsanaTaskProviderIdentity
 
 export function normalizeTaskProviderIdentity(
   provider: TaskProvider,
@@ -79,6 +88,14 @@ export function normalizeTaskProviderIdentity(
         siteUrl: normalizeNonEmptyString(raw.siteUrl),
         projectKey: normalizeNonEmptyString(raw.projectKey)
       }
+    case 'asana':
+      return {
+        provider,
+        workspaceGid: normalizeNonEmptyString(raw.workspaceGid),
+        workspaceName: normalizeNonEmptyString(raw.workspaceName),
+        projectGid: normalizeNonEmptyString(raw.projectGid),
+        projectName: normalizeNonEmptyString(raw.projectName)
+      }
   }
 }
 
@@ -112,6 +129,10 @@ export function isStoredTaskProviderIdentity(provider: TaskProvider, identity: u
       )
     case 'jira':
       return ['siteId', 'siteUrl', 'projectKey'].every((key) => isNullableOptionalString(raw[key]))
+    case 'asana':
+      return ['workspaceGid', 'workspaceName', 'projectGid', 'projectName'].every((key) =>
+        isNullableOptionalString(raw[key])
+      )
   }
 }
 
@@ -119,7 +140,8 @@ const TASK_PROVIDER_IDENTITY_FIELDS: Record<TaskProvider, readonly string[]> = {
   github: ['owner', 'repo', 'host'],
   gitlab: ['projectId', 'namespace', 'project', 'webUrl'],
   linear: ['workspaceId', 'workspaceName', 'teamId', 'teamKey'],
-  jira: ['siteId', 'siteUrl', 'projectKey']
+  jira: ['siteId', 'siteUrl', 'projectKey'],
+  asana: ['workspaceGid', 'workspaceName', 'projectGid', 'projectName']
 }
 
 export function areTaskProviderIdentitiesEqual(
@@ -157,6 +179,8 @@ export function taskProviderIdentityCachePart(
       return [identity.workspaceId, identity.teamId ?? identity.teamKey].filter(Boolean).join('/')
     case 'jira':
       return [identity.siteId ?? identity.siteUrl, identity.projectKey].filter(Boolean).join('/')
+    case 'asana':
+      return [identity.workspaceGid, identity.projectGid].filter(Boolean).join('/')
   }
 }
 

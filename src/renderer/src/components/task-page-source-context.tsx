@@ -1,6 +1,7 @@
 import type { GitLabTaskFilter, GitLabIssueFilter } from '@/components/task-page-localized-options'
 import type { GitHubWorkItem } from '../../../shared/github/work-item-types'
 import type { GitLabProjectRef, GitLabWorkItem } from '../../../shared/gitlab-types'
+import type { AsanaTask } from '../../../shared/asana-types'
 import type { JiraIssue } from '../../../shared/jira-types'
 import type { Repo } from '../../../shared/repo-types'
 import { getLinkedWorkItemWorkspaceName, getLinkedWorkItemSuggestedName } from '@/lib/new-workspace'
@@ -61,6 +62,17 @@ export function getJiraIssueWorkspaceSeed(issue: JiraIssue): string {
       title: `${issue.key} ${issue.title}`,
       jiraIdentifier: issue.key
     })?.seedName ?? getLinkedWorkItemSuggestedName(issue)
+  )
+}
+export function getAsanaTaskWorkspaceSeed(task: AsanaTask): string {
+  return (
+    getLinkedWorkItemWorkspaceName({
+      type: 'issue',
+      provider: 'asana',
+      number: 0,
+      title: task.name,
+      asanaIdentifier: task.gid
+    })?.seedName ?? getLinkedWorkItemSuggestedName({ title: task.name })
   )
 }
 export function getTaskPageRepoSourceContext(
