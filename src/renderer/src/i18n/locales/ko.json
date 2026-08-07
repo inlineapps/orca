@@ -12378,7 +12378,7 @@
             "list_end": ", 그리고 ",
             "list_pair": " and ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "이슈를 작업으로 사용할 수 있음 · 팀이 Linear 또는 Jira에서 작업을 계획한다면 추가하세요",
+            "code_host_tasks_summary": "이슈를 작업으로 사용할 수 있음 · 팀이 Linear, Jira 또는 Asana에서 작업을 계획한다면 추가하세요",
             "code_host_tasks_caption": "코드 호스트의 이슈도 작업으로 사용할 수 있습니다.",
             "review_step_title": "agents가 작업하는 동안 PR 상태 보기",
             "review_step_description": "Orca가 PR 또는 MR 상태, 체크, 리뷰를 표시할 수 있도록 리뷰 공급자를 연결하세요.",

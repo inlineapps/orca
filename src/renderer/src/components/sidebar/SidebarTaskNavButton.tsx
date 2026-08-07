@@ -2,6 +2,7 @@ import React from 'react'
 import { EyeOff, Github, Gitlab, List } from 'lucide-react'
 import { JiraIcon } from '@/components/icons/JiraIcon'
 import { LinearIcon } from '@/components/icons/LinearIcon'
+import { AsanaIcon } from '@/components/icons/AsanaIcon'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -245,6 +246,18 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
                 onOpen={() => openTaskPage({ taskSource: 'jira' })}
               >
                 <JiraIcon className="size-3.5" />
+              </TaskProviderShortcut>
+            ) : null}
+            {visibleTaskProviders.includes('asana') ? (
+              <TaskProviderShortcut
+                canBrowseTasks={canBrowseTasks}
+                label={translate(
+                  'auto.components.sidebar.SidebarNav.openAsanaTasks',
+                  'Open Asana tasks'
+                )}
+                onOpen={() => openTaskPage({ taskSource: 'asana' })}
+              >
+                <AsanaIcon className="size-3.5" />
               </TaskProviderShortcut>
             ) : null}
           </span>

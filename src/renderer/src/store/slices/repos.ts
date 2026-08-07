@@ -29,6 +29,8 @@ import {
   type ProjectHostSetupProjection
 } from '../../../../shared/project-host-setup-projection'
 import {
+  ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+  ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE,
   FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY,
   PROJECT_HOST_SETUP_RUNTIME_CAPABILITY,
   WORKSPACE_RUN_CONTEXT_RUNTIME_CAPABILITY,
@@ -2532,6 +2534,17 @@ export const createRepoSlice: StateCreator<AppState, [], [], RepoSlice> = (set, 
           'Update the remote runtime to link Jira'
         )
       }
+      if (
+        target.kind === 'environment' &&
+        (args.linkedTask?.provider === 'asana' ||
+          args.linkedTaskSourceContext?.provider === 'asana')
+      ) {
+        await assertRuntimeEnvironmentCapability(
+          target.environmentId,
+          ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+          ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE
+        )
+      }
       const workspace =
         target.kind === 'local'
           ? await window.api.folderWorkspaces.create(args)
@@ -2586,6 +2599,17 @@ export const createRepoSlice: StateCreator<AppState, [], [], RepoSlice> = (set, 
         target.environmentId,
         WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
         'Update the remote runtime to link Jira'
+      )
+    }
+    if (
+      target.kind === 'environment' &&
+      (updates.linkedTask?.provider === 'asana' ||
+        updates.linkedTaskSourceContext?.provider === 'asana')
+    ) {
+      await assertRuntimeEnvironmentCapability(
+        target.environmentId,
+        ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+        ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE
       )
     }
     const updateTicket = folderWorkspaceUpdates.begin(
