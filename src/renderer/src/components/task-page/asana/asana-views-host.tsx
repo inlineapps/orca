@@ -5,7 +5,8 @@ import AsanaTaskWorkspace from '@/components/AsanaTaskWorkspace'
 import { AsanaTaskList } from '@/components/AsanaTaskList'
 import { translate } from '@/i18n/i18n'
 import type { AsanaTask } from '../../../../../shared/asana-types'
-import type { AsanaTaskSectionGroup } from '../../../../../shared/asana-task-sections'
+import type { AsanaTaskBoardGroup } from '@/components/use-asana-task-board'
+import type { AsanaSubtaskController } from '@/components/use-asana-subtasks'
 import type { TaskProvider } from '../../../../../shared/task-providers'
 
 export type AsanaViewsHostProps = {
@@ -14,12 +15,14 @@ export type AsanaViewsHostProps = {
   setAsanaConnectOpen: (open: boolean) => void
   hideTaskSource: (provider: TaskProvider, label: string) => void
   selectedAsanaTask: AsanaTask | null
+  subtasks: AsanaSubtaskController
   handleUseAsanaTask: (task: AsanaTask) => void
   openAsanaDetailPage: (task: AsanaTask) => void
   closeTaskDetailPage: () => void
   asanaLoading?: boolean
   asanaError: string | null
-  asanaTaskGroups: AsanaTaskSectionGroup[]
+  asanaBoardGroups: AsanaTaskBoardGroup[]
+  onToggleSection: (gid: string) => void
 }
 
 export function AsanaViewsHost({
@@ -28,11 +31,13 @@ export function AsanaViewsHost({
   setAsanaConnectOpen,
   hideTaskSource,
   selectedAsanaTask,
+  subtasks,
   handleUseAsanaTask,
   openAsanaDetailPage,
   closeTaskDetailPage,
   asanaError,
-  asanaTaskGroups
+  asanaBoardGroups,
+  onToggleSection
 }: AsanaViewsHostProps): React.JSX.Element {
   if (!asanaStatusReady) {
     return (
@@ -67,7 +72,9 @@ export function AsanaViewsHost({
     return (
       <AsanaTaskWorkspace
         task={selectedAsanaTask}
+        subtasks={subtasks}
         onUse={handleUseAsanaTask}
+        onOpenTask={openAsanaDetailPage}
         onClose={closeTaskDetailPage}
       />
     )
@@ -82,10 +89,12 @@ export function AsanaViewsHost({
       ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto scrollbar-sleek">
         <AsanaTaskList
-          groups={asanaTaskGroups}
+          groups={asanaBoardGroups}
           selectedTask={selectedAsanaTask}
+          subtasks={subtasks}
           onOpenTask={openAsanaDetailPage}
           onStartWorkspace={handleUseAsanaTask}
+          onToggleSection={onToggleSection}
         />
       </div>
     </div>
