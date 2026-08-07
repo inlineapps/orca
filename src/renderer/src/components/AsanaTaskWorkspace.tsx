@@ -1,20 +1,32 @@
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { useEffect } from 'react'
+import { ArrowLeft, CircleCheck, CircleDashed, ExternalLink } from 'lucide-react'
 import type { AsanaTask } from '../../../shared/types'
+import { hasAsanaSubtasks, type AsanaSubtaskController } from '@/components/use-asana-subtasks'
 import { AsanaIcon } from '@/components/icons/AsanaIcon'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 
 type AsanaTaskWorkspaceProps = {
   task: AsanaTask
+  subtasks: AsanaSubtaskController
   onUse: (task: AsanaTask) => void
+  onOpenTask: (task: AsanaTask) => void
   onClose: () => void
 }
 
 export default function AsanaTaskWorkspace({
   task,
+  subtasks,
   onUse,
+  onOpenTask,
   onClose
 }: AsanaTaskWorkspaceProps): React.JSX.Element {
+  const { ensure } = subtasks
+  useEffect(() => {
+    ensure(task)
+  }, [ensure, task])
+  const subtaskEntry = subtasks.entries[task.gid]
+
   return (
     <div className="flex min-h-0 max-h-full flex-col overflow-hidden rounded-md border border-border/50 bg-background shadow-sm">
       <div className="flex h-10 flex-none items-center justify-between gap-3 border-b border-border/50 bg-muted/35 px-3">
@@ -79,6 +91,41 @@ export default function AsanaTaskWorkspace({
             </span>
           ) : null}
         </div>
+        {hasAsanaSubtasks(task) ? (
+          <div className="mt-6">
+            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {translate('auto.components.AsanaTaskWorkspace.subtasks', 'Subtasks')}
+            </h2>
+            {!subtaskEntry || subtaskEntry.loading ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {translate(
+                  'auto.components.AsanaTaskWorkspace.loadingSubtasks',
+                  'Loading subtasks…'
+                )}
+              </p>
+            ) : null}
+            {subtaskEntry?.error ? (
+              <p className="mt-2 text-xs text-status-error">{subtaskEntry.error}</p>
+            ) : null}
+            <div className="mt-2 divide-y divide-border/50 rounded-md border border-border/50">
+              {subtaskEntry?.tasks.map((subtask) => (
+                <button
+                  key={subtask.gid}
+                  type="button"
+                  onClick={() => onOpenTask(subtask)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-accent"
+                >
+                  {subtask.completed ? (
+                    <CircleCheck className="size-3.5 shrink-0 text-status-success" />
+                  ) : (
+                    <CircleDashed className="size-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="truncate text-[13px] text-foreground">{subtask.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <Button className="mt-7" onClick={() => onUse(task)}>
           {translate('auto.components.AsanaTaskWorkspace.startWorkspace', 'Start workspace')}
         </Button>
