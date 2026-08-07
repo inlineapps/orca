@@ -1989,7 +1989,10 @@ const api = {
       limit?: number
       includeCompleted?: boolean
       workspaceGid?: string
+      sectionGid?: string
     }): Promise<AsanaProjectTasks> => ipcRenderer.invoke('asana:listProjectTasks', args),
+    listSubtasks: (args: { gid: string; workspaceGid?: string }): Promise<AsanaTask[]> =>
+      ipcRenderer.invoke('asana:listSubtasks', args),
     searchTasks: (args: {
       query: string
       limit?: number

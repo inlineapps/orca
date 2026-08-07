@@ -1,6 +1,12 @@
 import type { StateCreator } from 'zustand'
 import type { AppState } from '../types'
-import type { AsanaConnectResult, AsanaConnectionStatus, AsanaTask } from '../../../../shared/types'
+import type {
+  AsanaConnectResult,
+  AsanaConnectionStatus,
+  AsanaSection,
+  AsanaTask
+} from '../../../../shared/types'
+import { withBoundedAsanaCacheEntry, type AsanaCacheEntry } from '@/store/slices/asana-task-cache'
 import {
   asanaConnect as connectAsanaRuntime,
   asanaDisconnect as disconnectAsanaRuntime,
@@ -40,6 +46,12 @@ export type AsanaSlice = {
   asanaStatus: AsanaConnectionStatus
   asanaStatusChecked: boolean
   asanaStatusContextKey: string | null
+  asanaSectionsCache: Record<string, AsanaCacheEntry<AsanaSection[]>>
+  asanaTaskCache: Record<string, AsanaCacheEntry<AsanaTask[]>>
+  readAsanaSectionsCache: (key: string) => AsanaCacheEntry<AsanaSection[]> | undefined
+  writeAsanaSectionsCache: (key: string, sections: AsanaSection[]) => void
+  readAsanaTaskCache: (key: string) => AsanaCacheEntry<AsanaTask[]> | undefined
+  writeAsanaTaskCache: (key: string, tasks: AsanaTask[]) => void
   checkAsanaConnection: (force?: boolean) => Promise<void>
   readAsanaStatus: () => Promise<AsanaConnectionStatus>
   connectAsana: (token: string) => Promise<AsanaConnectResult>
@@ -61,6 +73,30 @@ export const createAsanaSlice: StateCreator<AppState, [], [], AsanaSlice> = (set
   asanaStatus: EMPTY_ASANA_STATUS,
   asanaStatusChecked: false,
   asanaStatusContextKey: null,
+  asanaSectionsCache: {},
+  asanaTaskCache: {},
+
+  readAsanaSectionsCache: (key) => get().asanaSectionsCache[key],
+
+  writeAsanaSectionsCache: (key, sections) => {
+    set({
+      asanaSectionsCache: withBoundedAsanaCacheEntry(get().asanaSectionsCache, key, {
+        data: sections,
+        fetchedAt: Date.now()
+      })
+    })
+  },
+
+  readAsanaTaskCache: (key) => get().asanaTaskCache[key],
+
+  writeAsanaTaskCache: (key, tasks) => {
+    set({
+      asanaTaskCache: withBoundedAsanaCacheEntry(get().asanaTaskCache, key, {
+        data: tasks,
+        fetchedAt: Date.now()
+      })
+    })
+  },
 
   checkAsanaConnection: async (force = false) => {
     const settings = get().settings
@@ -129,7 +165,9 @@ export const createAsanaSlice: StateCreator<AppState, [], [], AsanaSlice> = (set
     set({
       asanaStatus: EMPTY_ASANA_STATUS,
       asanaStatusChecked: true,
-      asanaStatusContextKey: getProviderRuntimeContextKey(settings)
+      asanaStatusContextKey: getProviderRuntimeContextKey(settings),
+      asanaSectionsCache: {},
+      asanaTaskCache: {}
     })
   },
 
