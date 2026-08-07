@@ -126,6 +126,25 @@ describe('Asana project reads', () => {
     expect(result.hasMore).toBe(true)
   })
 
+  it('reads one section directly and skips the sections round-trip', async () => {
+    asanaRequestMock.mockResolvedValue({ data: [taskRow('7712', '4485')] })
+
+    const result = await listProjectTasks(
+      PROJECT_GID,
+      200,
+      false,
+      'workspace-407865308541648',
+      '4485'
+    )
+    const paths = asanaRequestMock.mock.calls.map(([, path]) => path as string)
+
+    expect(paths).toHaveLength(1)
+    expect(paths[0]).toContain('section=4485')
+    expect(paths[0]).not.toContain(`project=${PROJECT_GID}`)
+    expect(result.sections).toEqual([])
+    expect(result.tasks.map((task) => [task.gid, task.sectionGid])).toEqual([['7712', '4485']])
+  })
+
   it('returns nothing for a blank project gid without calling Asana', async () => {
     await expect(listProjectTasks('   ')).resolves.toEqual({
       sections: [],
