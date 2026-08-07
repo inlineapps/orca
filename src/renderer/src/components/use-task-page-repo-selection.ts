@@ -38,6 +38,7 @@ export function useTaskPageRepoSelection(model: TaskPageStoreBindingsModel) {
     linearStatus,
     preflightStatus,
     jiraStatus,
+    asanaStatus,
     preflightStatusCurrent,
     linearConnected
   } = model
@@ -133,6 +134,13 @@ export function useTaskPageRepoSelection(model: TaskPageStoreBindingsModel) {
     selectedJiraSiteId && selectedJiraSiteId !== 'all'
       ? (jiraSites.find((site) => site.id === selectedJiraSiteId) ?? null)
       : null
+  const asanaWorkspaces = asanaStatus.workspaces ?? []
+  const selectedAsanaWorkspaceGid =
+    asanaStatus.activeWorkspaceGid ?? asanaWorkspaces[0]?.gid ?? null
+  const selectedAsanaWorkspace =
+    selectedAsanaWorkspaceGid != null
+      ? (asanaWorkspaces.find((workspace) => workspace.gid === selectedAsanaWorkspaceGid) ?? null)
+      : null
   const preferredVisibleTaskProviders = useMemo(
     () => normalizeVisibleTaskProviders(settings?.visibleTaskProviders),
     [settings?.visibleTaskProviders]
@@ -214,6 +222,9 @@ export function useTaskPageRepoSelection(model: TaskPageStoreBindingsModel) {
     jiraSites: typeof jiraSites
     selectedJiraSiteId: typeof selectedJiraSiteId
     selectedJiraSite: typeof selectedJiraSite
+    asanaWorkspaces: typeof asanaWorkspaces
+    selectedAsanaWorkspaceGid: typeof selectedAsanaWorkspaceGid
+    selectedAsanaWorkspace: typeof selectedAsanaWorkspace
     preferredVisibleTaskProviders: typeof preferredVisibleTaskProviders
     defaultTaskSource: typeof defaultTaskSource
     visibleTaskProviders: typeof visibleTaskProviders
@@ -246,6 +257,9 @@ export function useTaskPageRepoSelection(model: TaskPageStoreBindingsModel) {
   nextModel.jiraSites = jiraSites
   nextModel.selectedJiraSiteId = selectedJiraSiteId
   nextModel.selectedJiraSite = selectedJiraSite
+  nextModel.asanaWorkspaces = asanaWorkspaces
+  nextModel.selectedAsanaWorkspaceGid = selectedAsanaWorkspaceGid
+  nextModel.selectedAsanaWorkspace = selectedAsanaWorkspace
   nextModel.preferredVisibleTaskProviders = preferredVisibleTaskProviders
   nextModel.defaultTaskSource = defaultTaskSource
   nextModel.visibleTaskProviders = visibleTaskProviders

@@ -17,6 +17,8 @@ function resolveLinkedItemProvider(
     title: item.title ?? '',
     ...(item.linearIdentifier ? { linearIdentifier: item.linearIdentifier } : {}),
     ...(item.jiraIdentifier ? { jiraIdentifier: item.jiraIdentifier } : {}),
+    ...(item.asanaIdentifier ? { asanaIdentifier: item.asanaIdentifier } : {}),
+    ...(item.asanaWorkspaceGid ? { asanaWorkspaceGid: item.asanaWorkspaceGid } : {}),
     ...(item.repoId ? { repoId: item.repoId } : {})
   })
 }
@@ -36,8 +38,22 @@ export function isWorkspaceLinkedItemSourceContextMatch(
   if (itemProvider !== context.provider) {
     return false
   }
-  if (itemProvider !== 'jira') {
+  if (itemProvider !== 'jira' && itemProvider !== 'asana') {
     return true
+  }
+  if (itemProvider === 'asana') {
+    const identity = context.providerIdentity
+    if (
+      item.type !== 'issue' ||
+      item.number !== 0 ||
+      identity?.provider !== 'asana' ||
+      !identity.workspaceGid ||
+      !item.asanaIdentifier ||
+      !item.asanaWorkspaceGid
+    ) {
+      return false
+    }
+    return identity.workspaceGid === item.asanaWorkspaceGid
   }
   const identity = context.providerIdentity
   const itemUrl = parseJiraIssueUrl(item.url)

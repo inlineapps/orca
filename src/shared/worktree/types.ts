@@ -8,13 +8,15 @@ import type { BuiltInWorktreeVisibilitySourceId } from '../repo-types'
 import type { WorktreeIdentity } from './identity'
 
 export type WorkspaceLinkedItem = {
-  provider: 'github' | 'gitlab' | 'linear' | 'jira'
+  provider: 'github' | 'gitlab' | 'linear' | 'jira' | 'asana'
   type: 'issue' | 'pr' | 'mr'
   number: number
   title: string
   url: string
   linearIdentifier?: string
   jiraIdentifier?: string
+  asanaIdentifier?: string
+  asanaWorkspaceGid?: string
   repoId?: string
 }
 

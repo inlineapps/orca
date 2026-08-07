@@ -21,7 +21,9 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
         openLinearIssue: undefined,
         openLinearSourceContext: undefined,
         openJiraIssue: undefined,
-        openJiraSourceContext: undefined
+        openJiraSourceContext: undefined,
+        openAsanaTask: undefined,
+        openAsanaSourceContext: undefined
       }
     }))
     return
@@ -41,7 +43,9 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
         openLinearIssue: undefined,
         openLinearSourceContext: undefined,
         openJiraIssue: undefined,
-        openJiraSourceContext: undefined
+        openJiraSourceContext: undefined,
+        openAsanaTask: undefined,
+        openAsanaSourceContext: undefined
       }
     }))
     return
@@ -62,7 +66,9 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
         openLinearIssue: undefined,
         openLinearSourceContext: undefined,
         openJiraIssue: undefined,
-        openJiraSourceContext: undefined
+        openJiraSourceContext: undefined,
+        openAsanaTask: undefined,
+        openAsanaSourceContext: undefined
       }
     }))
     return
@@ -82,7 +88,31 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
         openLinearIssue: undefined,
         openLinearSourceContext: undefined,
         openJiraIssue: entry.issue,
-        openJiraSourceContext: entry.sourceContext
+        openJiraSourceContext: entry.sourceContext,
+        openAsanaTask: undefined,
+        openAsanaSourceContext: undefined
+      }
+    }))
+    return
+  }
+  if (entry.source === 'asana') {
+    useAppStore.setState((state) => ({
+      activeView: 'tasks',
+      githubTaskDrawerWorkItem: null,
+      taskPageData: {
+        ...state.taskPageData,
+        taskSource: 'asana',
+        openGitHubWorkItem: undefined,
+        openGitHubSourceContext: undefined,
+        openGitHubInitialTab: undefined,
+        openGitLabWorkItem: undefined,
+        openGitLabSourceContext: undefined,
+        openLinearIssue: undefined,
+        openLinearSourceContext: undefined,
+        openJiraIssue: undefined,
+        openJiraSourceContext: undefined,
+        openAsanaTask: entry.task,
+        openAsanaSourceContext: entry.sourceContext
       }
     }))
     return
@@ -101,7 +131,9 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
       openLinearIssue: entry.issue,
       openLinearSourceContext: entry.sourceContext,
       openJiraIssue: undefined,
-      openJiraSourceContext: undefined
+      openJiraSourceContext: undefined,
+      openAsanaTask: undefined,
+      openAsanaSourceContext: undefined
     }
   }))
 }

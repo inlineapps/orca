@@ -31,6 +31,7 @@ import { glApiBridge } from './api/gl-bridge'
 import { bitbucketApi } from './api/bitbucket-bridge'
 import { linearApi } from './api/linear-bridge'
 import { jiraApi } from './api/jira-bridge'
+import { asanaApi } from './api/asana-bridge'
 import { starNagApi } from './api/star-nag-bridge'
 import { diagnosticsApi } from './api/diagnostics-bridge'
 import { settingsApi } from './api/settings-bridge'
@@ -126,6 +127,7 @@ const api = {
   bitbucket: bitbucketApi,
   linear: linearApi,
   jira: jiraApi,
+  asana: asanaApi,
   starNag: starNagApi,
   telemetryTrack: telemetryTrackApi,
   telemetrySetOptIn: telemetrySetOptInApi,

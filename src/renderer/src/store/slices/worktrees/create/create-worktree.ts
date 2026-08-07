@@ -12,7 +12,11 @@ import {
   callRuntimeRpc,
   getActiveRuntimeTarget
 } from '../../../../runtime/runtime-rpc-client'
-import { WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY } from '../../../../../../shared/protocol-version'
+import {
+  ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+  ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE,
+  WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY
+} from '../../../../../../shared/protocol-version'
 import { showLocalBaseRefUpdateSuggestionToast } from '@/components/sidebar/local-base-ref-suggestion-toast'
 import { requestWorktreeBaseFallbackNotice } from '@/components/worktree-base-fallback-notice'
 import { showLocalBaseRefRefreshToast } from './local-base-ref-refresh-toast'
@@ -179,6 +183,17 @@ export function createCreateWorktree(
           target.environmentId,
           WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
           'Update the remote runtime to link Jira'
+        )
+      }
+      if (
+        target.kind === 'environment' &&
+        (options?.linkedWorkItem?.provider === 'asana' ||
+          options?.linkedTaskSourceContext?.provider === 'asana')
+      ) {
+        await assertRuntimeEnvironmentCapability(
+          target.environmentId,
+          ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+          ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE
         )
       }
       if (options?.provisionedRoot && target.kind !== 'local') {
