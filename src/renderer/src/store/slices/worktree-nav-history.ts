@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand'
 import type { AppState } from '../types'
 import { findWorktreeById } from './worktree-helpers'
+import type { AsanaTask } from '../../../../shared/asana-types'
 import type { GitHubWorkItem } from '../../../../shared/github/work-item-types'
 import type { JiraIssue } from '../../../../shared/jira-types'
 import type { LinearIssue } from '../../../../shared/linear/issue-types'
@@ -40,6 +41,12 @@ export type WorktreeNavHistoryTaskDetailEntry =
       kind: 'task-detail'
       source: 'jira'
       issue: JiraIssue
+      sourceContext?: TaskSourceContext | null
+    }
+  | {
+      kind: 'task-detail'
+      source: 'asana'
+      task: AsanaTask
       sourceContext?: TaskSourceContext | null
     }
 export type WorktreeNavHistoryViewEntry =
@@ -110,6 +117,13 @@ function getHistoryEntryKey(entry: WorktreeNavHistoryEntry): string {
         ? getTaskSourceCacheScope(entry.sourceContext)
         : 'legacy'
     return `view:task-detail:jira:${sourceScope}:${entry.issue.siteId ?? 'selected'}:${entry.issue.key}`
+  }
+  if (entry.source === 'asana') {
+    const sourceScope =
+      entry.sourceContext?.provider === 'asana'
+        ? getTaskSourceCacheScope(entry.sourceContext)
+        : 'legacy'
+    return `view:task-detail:asana:${sourceScope}:${entry.task.gid}`
   }
   const sourceScope =
     entry.sourceContext?.provider === 'linear'

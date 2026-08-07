@@ -28,6 +28,13 @@ export const TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY = 'task-source-context.v1' a
 export const WORKSPACE_RUN_CONTEXT_RUNTIME_CAPABILITY = 'workspace-run-context.v1' as const
 export const WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY =
   'worktree.linked-work-item-context.v1' as const
+export const ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY = 'task-source.asana.v1' as const
+export const ASANA_TASK_PROVIDER_UPDATE_REQUIRED_MESSAGE =
+  'Asana tasks require a newer Orca server. Update the server and try again.'
+// Why: hosts on task-source.asana.v1 alone lack project/section reads and ignore the
+// completed-task flag, so clients must hide the project view and filters instead of
+// showing an empty list.
+export const ASANA_PROJECT_VIEW_RUNTIME_CAPABILITY = 'task-source.asana.project-view.v1' as const
 export const REMOTE_RUNTIME_SHARED_CONTROL_CAPABILITY = 'remote-runtime.shared-control.v1' as const
 export const ORCHESTRATION_FEDERATION_RUNTIME_CAPABILITY = 'orchestration.federation.v1' as const
 export const ORCHESTRATION_FEDERATION_CONTROL_MAIL_RUNTIME_CAPABILITY =
@@ -116,6 +123,8 @@ export const RUNTIME_CAPABILITIES = [
   TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY,
   WORKSPACE_RUN_CONTEXT_RUNTIME_CAPABILITY,
   WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
+  ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+  ASANA_PROJECT_VIEW_RUNTIME_CAPABILITY,
   FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY,
   LINEAR_ISSUE_ATTRIBUTE_FILTER_RUNTIME_CAPABILITY,
   AI_VAULT_RUNTIME_CAPABILITY,

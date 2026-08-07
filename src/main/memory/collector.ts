@@ -31,14 +31,9 @@ import type {
   AppMemory,
   MemorySnapshot,
   SessionMemory,
-<<<<<<< HEAD
-  WorktreeMemory
-} from '../../shared/process-stats-types'
-=======
   WorkspaceBackgroundServiceMemory,
   WorktreeMemory
-} from '../../shared/types'
->>>>>>> a115a8fb8b (feat(editor): add TypeScript language service)
+} from '../../shared/process-stats-types'
 import type { Store } from '../persistence'
 import { ORPHAN_WORKTREE_ID } from '../../shared/constants'
 import { listRegisteredPtys } from './pty-registry'
