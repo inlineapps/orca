@@ -23,6 +23,10 @@ import {
   type TaskPageJiraFiltersProps
 } from '@/components/task-page/chrome/task-page-jira-filters'
 import {
+  TaskPageAsanaFilters,
+  type TaskPageAsanaFiltersProps
+} from '@/components/task-page/chrome/task-page-asana-filters'
+import {
   TaskPageGitlabFilters,
   type TaskPageGitlabFiltersProps
 } from '@/components/task-page/chrome/task-page-gitlab-filters'
@@ -67,6 +71,10 @@ import {
   LinearViewsHost,
   type LinearViewsHostProps
 } from '@/components/task-page/linear/linear-views-host'
+import {
+  AsanaViewsHost,
+  type AsanaViewsHostProps
+} from '@/components/task-page/asana/asana-views-host'
 import type { GitLabTodo } from '../../../../shared/gitlab-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { TaskProvider } from '../../../../shared/task-providers'
@@ -82,6 +90,8 @@ export function TaskPageLayout({
   linearFilters,
   jiraConnected,
   jiraFilters,
+  asanaConnected,
+  asanaFilters,
   gitlabFilters,
   githubDetail,
   repoSelection,
@@ -93,6 +103,7 @@ export function TaskPageLayout({
   gitlabList,
   jiraList,
   linearViews,
+  asanaViews,
   newGithubIssue,
   newLinearProject,
   newLinearIssue,
@@ -109,6 +120,8 @@ export function TaskPageLayout({
   linearFilters: TaskPageLinearFiltersProps
   jiraConnected: boolean
   jiraFilters: TaskPageJiraFiltersProps
+  asanaConnected: boolean
+  asanaFilters: TaskPageAsanaFiltersProps
   gitlabFilters: TaskPageGitlabFiltersProps
   githubDetail: GithubDetailHostProps | null
   repoSelection: ReadonlySet<string>
@@ -120,6 +133,7 @@ export function TaskPageLayout({
   gitlabList: GitlabWorkItemListProps
   jiraList: JiraIssueListHostProps
   linearViews: LinearViewsHostProps
+  asanaViews: AsanaViewsHostProps
   newGithubIssue: NewGithubIssueDialogProps
   newLinearProject: NewLinearProjectDialogProps
   newLinearIssue: NewLinearIssueDialogProps
@@ -144,6 +158,8 @@ export function TaskPageLayout({
                   <TaskPageLinearFilters {...linearFilters} />
                 ) : taskSource === 'jira' && jiraConnected ? (
                   <TaskPageJiraFilters {...jiraFilters} />
+                ) : taskSource === 'asana' && asanaConnected ? (
+                  <TaskPageAsanaFilters {...asanaFilters} />
                 ) : taskSource === 'gitlab' ? (
                   <TaskPageGitlabFilters {...gitlabFilters} />
                 ) : null}
@@ -170,6 +186,8 @@ export function TaskPageLayout({
             <JiraIssueListHost {...jiraList} />
           ) : taskSource === 'linear' ? (
             <LinearViewsHost {...linearViews} />
+          ) : taskSource === 'asana' ? (
+            <AsanaViewsHost {...asanaViews} />
           ) : null}
         </div>
       </div>

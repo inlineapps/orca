@@ -7,6 +7,7 @@ import { findTaskPageJiraIssue } from '@/components/task-page-jira-cache-selecto
 import type { GitHubWorkItem } from '../../../../../shared/github/work-item-types'
 import type { JiraIssue } from '../../../../../shared/jira-types'
 import type { LinearIssue } from '../../../../../shared/linear/issue-types'
+import type { AsanaTask } from '../../../../../shared/asana-types'
 import type { TaskSourceContext } from '../../../../../shared/task-source-context'
 import type { AppState } from '@/store/types'
 
@@ -14,12 +15,14 @@ export function useTaskPageSelectedIssueState({
   pageData,
   linearTaskSourceContext,
   jiraTaskSourceContext,
+  asanaTaskSourceContext,
   openTaskPage,
   setDialogWorkItem
 }: {
   pageData: AppState['taskPageData']
   linearTaskSourceContext: TaskSourceContext | null
   jiraTaskSourceContext: TaskSourceContext | null
+  asanaTaskSourceContext?: TaskSourceContext | null
   openTaskPage: AppState['openTaskPage']
   setDialogWorkItem: (item: GitHubWorkItem | null) => void
 }) {
@@ -177,6 +180,28 @@ export function useTaskPageSelectedIssueState({
     setSelectedJiraIssueFallback(issue)
   }, [])
 
+  const [selectedAsanaTaskGid, setSelectedAsanaTaskGid] = useState<string | null>(null)
+  const [selectedAsanaTaskFallback, setSelectedAsanaTaskFallback] = useState<AsanaTask | null>(null)
+
+  const setSelectedAsanaTask = useCallback((task: AsanaTask | null) => {
+    setSelectedAsanaTaskGid(task?.gid ?? null)
+    setSelectedAsanaTaskFallback(task)
+  }, [])
+
+  const openAsanaDetailPage = useCallback(
+    (task: AsanaTask) => {
+      openTaskPage(
+        {
+          taskSource: 'asana',
+          openAsanaTask: task,
+          openAsanaSourceContext: asanaTaskSourceContext ?? null
+        },
+        { recordTasksInteraction: false }
+      )
+    },
+    [asanaTaskSourceContext, openTaskPage]
+  )
+
   const openJiraDetailPage = useCallback(
     (issue: JiraIssue) => {
       openTaskPage(
@@ -212,6 +237,12 @@ export function useTaskPageSelectedIssueState({
     selectedJiraIssue,
     jiraDetailSourceContext,
     setSelectedJiraIssue,
-    openJiraDetailPage
+    openJiraDetailPage,
+    selectedAsanaTaskGid,
+    setSelectedAsanaTaskGid,
+    selectedAsanaTaskFallback,
+    setSelectedAsanaTaskFallback,
+    setSelectedAsanaTask,
+    openAsanaDetailPage
   }
 }

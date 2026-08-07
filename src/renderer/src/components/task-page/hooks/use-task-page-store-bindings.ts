@@ -72,6 +72,11 @@ export function useTaskPageStoreBindings() {
   const searchJiraIssues = useAppStore((s) => s.searchJiraIssues)
   const listJiraIssues = useAppStore((s) => s.listJiraIssues)
   const checkJiraConnection = useAppStore((s) => s.checkJiraConnection)
+  const asanaStatus = useAppStore((s) => s.asanaStatus)
+  const asanaStatusChecked = useAppStore((s) => s.asanaStatusChecked)
+  const asanaStatusContextKey = useAppStore((s) => s.asanaStatusContextKey)
+  const selectAsanaWorkspace = useAppStore((s) => s.selectAsanaWorkspace)
+  const checkAsanaConnection = useAppStore((s) => s.checkAsanaConnection)
   const providerRuntimeContextKey = getProviderRuntimeContextKey(settings)
   const providerRuntimeContextKeyRef = useRef(providerRuntimeContextKey)
   useLayoutEffect(() => {
@@ -79,11 +84,14 @@ export function useTaskPageStoreBindings() {
   }, [providerRuntimeContextKey])
   const linearStatusCurrent = linearStatusContextKey === providerRuntimeContextKey
   const jiraStatusCurrent = jiraStatusContextKey === providerRuntimeContextKey
+  const asanaStatusCurrent = asanaStatusContextKey === providerRuntimeContextKey
   const preflightStatusCurrent = preflightStatusContextKey === expectedPreflightContextKey
   const linearStatusReady = linearStatusCurrent && linearStatusChecked
   const jiraStatusReady = jiraStatusCurrent && jiraStatusChecked
+  const asanaStatusReady = asanaStatusCurrent && asanaStatusChecked
   const linearConnected = linearStatusCurrent && linearStatus.connected
   const jiraConnected = jiraStatusCurrent && jiraStatus.connected
+  const asanaConnected = asanaStatusCurrent && asanaStatus.connected
   const submitShortcutLabel = getScreenSubmitShortcutLabel()
   const eligibleRepos = useMemo(() => getTaskEligibleRepos(repos), [repos])
 
@@ -147,15 +155,23 @@ export function useTaskPageStoreBindings() {
     searchJiraIssues,
     listJiraIssues,
     checkJiraConnection,
+    asanaStatus,
+    asanaStatusChecked,
+    asanaStatusContextKey,
+    selectAsanaWorkspace,
+    checkAsanaConnection,
     providerRuntimeContextKey,
     providerRuntimeContextKeyRef,
     linearStatusCurrent,
     jiraStatusCurrent,
+    asanaStatusCurrent,
     preflightStatusCurrent,
     linearStatusReady,
     jiraStatusReady,
+    asanaStatusReady,
     linearConnected,
     jiraConnected,
+    asanaConnected,
     submitShortcutLabel,
     eligibleRepos
   }
