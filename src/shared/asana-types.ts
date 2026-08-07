@@ -41,6 +41,8 @@ export type AsanaTask = {
   workspace?: AsanaWorkspace | null
   projects: AsanaProject[]
   parent?: { gid: string; name: string; permalinkUrl?: string } | null
+  /** Absent on hosts that predate subtask reads, which is why the caller must not assume 0. */
+  numSubtasks?: number
   /** Section membership resolved against the project the task was listed under. */
   sectionGid?: string | null
   sectionName?: string | null
