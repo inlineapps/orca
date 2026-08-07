@@ -4,6 +4,7 @@ import { getSettingsFocusedExecutionHostId } from '../../../../../shared/executi
 import type { ExecutionHostRegistryEntry } from '../../../../../shared/execution-host-registry'
 import type { GlobalSettings } from '../../../../../shared/global-settings-types'
 import type { JiraSite } from '../../../../../shared/jira-types'
+import type { AsanaWorkspace } from '../../../../../shared/asana-types'
 import type { LinearWorkspace } from '../../../../../shared/linear/workspace-types'
 import type { PreflightStatus } from '../../../../../preload/api-types'
 import type { Repo } from '../../../../../shared/repo-types'
@@ -35,6 +36,8 @@ export function useTaskPageSourceAvailability({
   selectedLinearWorkspaceId,
   selectedJiraSite,
   selectedJiraSiteId,
+  selectedAsanaWorkspace,
+  selectedAsanaWorkspaceGid,
   linearListInvalidationToken,
   providerRuntimeContextKey
 }: {
@@ -54,6 +57,8 @@ export function useTaskPageSourceAvailability({
   selectedLinearWorkspaceId: string | null
   selectedJiraSite: JiraSite | null
   selectedJiraSiteId: string | null
+  selectedAsanaWorkspace?: AsanaWorkspace | null
+  selectedAsanaWorkspaceGid?: string | null
   linearListInvalidationToken: { scope: string; version: number }
   providerRuntimeContextKey: string
 }) {
@@ -151,8 +156,30 @@ export function useTaskPageSourceAvailability({
   const jiraTaskSourceScopeKey = jiraTaskSourceContext
     ? getTaskSourceCacheScope(jiraTaskSourceContext)
     : providerRuntimeContextKey
+  const asanaTaskSourceContext = useMemo(
+    () =>
+      normalizeTaskSourceContext({
+        provider: 'asana',
+        projectId: fallbackTaskSourceProjectId,
+        hostId: accountBackedTaskSourceHostId,
+        providerIdentity: {
+          provider: 'asana',
+          workspaceGid: selectedAsanaWorkspaceGid ?? null
+        },
+        accountLabel: selectedAsanaWorkspace?.name ?? null
+      }),
+    [
+      accountBackedTaskSourceHostId,
+      fallbackTaskSourceProjectId,
+      selectedAsanaWorkspace,
+      selectedAsanaWorkspaceGid
+    ]
+  )
+  const asanaTaskSourceScopeKey = asanaTaskSourceContext
+    ? getTaskSourceCacheScope(asanaTaskSourceContext)
+    : providerRuntimeContextKey
   const accountBackedTaskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (taskSource !== 'linear' && taskSource !== 'jira') {
+    if (taskSource !== 'linear' && taskSource !== 'jira' && taskSource !== 'asana') {
       return []
     }
     const host = hostRegistryById.get(accountBackedTaskSourceHostId)
@@ -168,6 +195,8 @@ export function useTaskPageSourceAvailability({
     linearListInvalidationVersionForSource,
     jiraTaskSourceContext,
     jiraTaskSourceScopeKey,
+    asanaTaskSourceContext,
+    asanaTaskSourceScopeKey,
     accountBackedTaskSourceHostAvailability
   }
 }

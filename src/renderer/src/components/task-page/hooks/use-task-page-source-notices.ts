@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 import type { ExecutionHostRegistryEntry } from '../../../../../shared/execution-host-registry'
 import type { JiraSite } from '../../../../../shared/jira-types'
+import type { AsanaWorkspace } from '../../../../../shared/asana-types'
 import type { LinearWorkspace } from '../../../../../shared/linear/workspace-types'
 import type { PreflightStatus } from '../../../../../preload/api-types'
 import type { Repo } from '../../../../../shared/repo-types'
@@ -37,6 +38,7 @@ export function useTaskPageSourceNotices({
   taskSourceHostAvailability,
   selectedLinearWorkspace,
   selectedJiraSite,
+  selectedAsanaWorkspace,
   sourceOptions
 }: {
   taskSource: TaskProvider
@@ -56,6 +58,7 @@ export function useTaskPageSourceNotices({
   taskSourceHostAvailability: TaskSourceHostAvailability[]
   selectedLinearWorkspace: LinearWorkspace | null
   selectedJiraSite: JiraSite | null
+  selectedAsanaWorkspace?: AsanaWorkspace | null
   sourceOptions: SourceOption[]
 }) {
   const taskSourceAvailabilityNoticeByProvider = useMemo<
@@ -124,6 +127,13 @@ export function useTaskPageSourceNotices({
           sourceCount: 1,
           hostLabelById,
           hostAvailability: accountAvailability
+        }) ?? undefined,
+      asana:
+        getTaskSourceAvailabilityNotice({
+          providerLabel: labelFor('asana'),
+          sourceCount: 1,
+          hostLabelById,
+          hostAvailability: accountAvailability
         }) ?? undefined
     }
   }, [
@@ -145,7 +155,7 @@ export function useTaskPageSourceNotices({
       providerLabel,
       repoContexts: taskSourceRepoContexts,
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       accountHostId: accountBackedTaskSourceHostId,
@@ -153,9 +163,11 @@ export function useTaskPageSourceNotices({
       selectedRepoCount: selectedRepos.length,
       linearWorkspaceName:
         selectedLinearWorkspace?.organizationName ?? selectedLinearWorkspace?.id ?? null,
-      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null
+      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null,
+      asanaWorkspaceName: selectedAsanaWorkspace?.name ?? null
     })
   }, [
+    selectedAsanaWorkspace,
     selectedJiraSite,
     selectedLinearWorkspace,
     selectedRepos.length,
@@ -173,11 +185,11 @@ export function useTaskPageSourceNotices({
     return getTaskSourceAvailabilityNotice({
       providerLabel,
       sourceCount:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? 1
           : Math.max(1, taskSourceRepoContexts.length),
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       hostLabelById

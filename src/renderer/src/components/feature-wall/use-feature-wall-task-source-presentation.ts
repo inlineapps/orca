@@ -32,6 +32,10 @@ export function useFeatureWallTaskSourcePresentation(
   const jiraStatusChecked = useAppStore((s) => s.jiraStatusChecked)
   const jiraStatusContextKey = useAppStore((s) => s.jiraStatusContextKey)
   const checkJiraConnection = useAppStore((s) => s.checkJiraConnection)
+  const asanaStatus = useAppStore((s) => s.asanaStatus)
+  const asanaStatusChecked = useAppStore((s) => s.asanaStatusChecked)
+  const asanaStatusContextKey = useAppStore((s) => s.asanaStatusContextKey)
+  const checkAsanaConnection = useAppStore((s) => s.checkAsanaConnection)
   const settings = useAppStore((s) => s.settings)
   const expectedPreflightContextKey = useAppStore((s) =>
     localPreflightContextKey(getLocalPreflightContext(s))
@@ -39,6 +43,7 @@ export function useFeatureWallTaskSourcePresentation(
   const providerRuntimeContextKey = getProviderRuntimeContextKey(settings)
   const linearStatusCurrent = linearStatusContextKey === providerRuntimeContextKey
   const jiraStatusCurrent = jiraStatusContextKey === providerRuntimeContextKey
+  const asanaStatusCurrent = asanaStatusContextKey === providerRuntimeContextKey
   const preflightStatusCurrent = preflightStatusContextKey === expectedPreflightContextKey
 
   useEffect(() => {
@@ -56,7 +61,14 @@ export function useFeatureWallTaskSourcePresentation(
     if (!jiraStatusCurrent || !jiraStatusChecked) {
       void checkJiraConnection()
     }
+    if (
+      typeof checkAsanaConnection === 'function' &&
+      (!asanaStatusCurrent || !asanaStatusChecked)
+    ) {
+      void checkAsanaConnection()
+    }
   }, [
+    checkAsanaConnection,
     checkJiraConnection,
     checkLinearConnection,
     expectedPreflightContextKey,
@@ -64,6 +76,9 @@ export function useFeatureWallTaskSourcePresentation(
     jiraStatusCurrent,
     jiraStatusChecked,
     jiraStatusContextKey,
+    asanaStatusCurrent,
+    asanaStatusChecked,
+    asanaStatusContextKey,
     linearStatusCurrent,
     linearStatusChecked,
     linearStatusContextKey,
@@ -87,6 +102,9 @@ export function useFeatureWallTaskSourcePresentation(
     jiraStatus,
     jiraStatusChecked,
     jiraStatusContextKey,
+    asanaStatus,
+    asanaStatusChecked,
+    asanaStatusContextKey,
     providerRuntimeContextKey
   })
 

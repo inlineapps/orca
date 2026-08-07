@@ -31,6 +31,7 @@ import type { GithubPullRequestApi } from './api/github-pull-request-api'
 import type { GithubWorkItemApi } from './api/github-work-item-api'
 import type { GitLabApi } from './api/gitlab-api'
 import type { BitbucketApi, HostedReviewApi } from './api/hosted-review-api'
+import type { AsanaApi } from './api/asana-api'
 import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
@@ -90,6 +91,7 @@ export type PreloadApi = {
   bitbucket: BitbucketApi
   linear: LinearApi
   jira: JiraApi
+  asana: AsanaApi
   starNag: StarNagApi
   telemetryTrack: TelemetryApi['telemetryTrack']
   telemetrySetOptIn: TelemetryApi['telemetrySetOptIn']
@@ -114,6 +116,7 @@ export type PreloadApi = {
   macosTccPrompts: MacosTccPromptsApi
   developerPermissions: DeveloperPermissionsApi
   computerUsePermissions: ComputerUsePermissionsApi
+  tsserver: TsserverApi
   shell: ShellApi
   skills: SkillsApi
   pet: PetApi
@@ -125,7 +128,6 @@ export type PreloadApi = {
   session: WorkspaceSessionApi['session']
   remoteWorkspace: WorkspaceSessionApi['remoteWorkspace']
   updater: UpdaterApi
-  tsserver: TsserverApi
   notebook: FilesystemApi['notebook']
   stats: StatsApi
   memory: MemoryApi

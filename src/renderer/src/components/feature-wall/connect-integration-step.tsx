@@ -26,7 +26,7 @@ export function IntegrationStep(props: {
   const done = state === 'done'
   const active = state === 'active'
   // Upcoming steps are openable too — the order is a recommendation, not a
-  // prerequisite, so a Linear/Jira-first user can connect tasks right away.
+  // prerequisite, so a task-provider-first user can connect tasks right away.
   const canToggle = !active && (props.canToggle ?? true)
 
   return (

@@ -16,6 +16,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { GlobalSettings } from '../../../../../shared/global-settings-types'
 import type { JiraIssue, JiraSite } from '../../../../../shared/jira-types'
+import type { AsanaTask, AsanaWorkspace } from '../../../../../shared/asana-types'
 import type {
   LinearTeam,
   LinearWorkspace,
@@ -63,6 +64,12 @@ export type TaskPageSourceToolbarProps = {
   setJiraIssues: (issues: JiraIssue[]) => void
   setJiraError: (error: TaskPageJiraLoadError | null) => void
   setJiraLoading: (loading: boolean) => void
+  asanaConnected: boolean
+  asanaWorkspaces: AsanaWorkspace[]
+  selectedAsanaWorkspaceGid: string | null
+  selectAsanaWorkspace: (gid: string) => Promise<void>
+  setSelectedAsanaTask: (task: AsanaTask | null) => void
+  resetAsanaProjectView: () => void
   taskSourceAvailabilityNotice: TaskSourceAvailabilityNotice | null
 }
 
@@ -95,6 +102,12 @@ export function TaskPageSourceToolbar({
   setJiraIssues,
   setJiraError,
   setJiraLoading,
+  asanaConnected,
+  asanaWorkspaces,
+  selectedAsanaWorkspaceGid,
+  selectAsanaWorkspace,
+  setSelectedAsanaTask,
+  resetAsanaProjectView,
   taskSourceAvailabilityNotice
 }: TaskPageSourceToolbarProps): React.JSX.Element {
   return (
@@ -262,6 +275,31 @@ export function TaskPageSourceToolbar({
                   {jiraSites.map((site) => (
                     <SelectItem key={site.id} value={site.id}>
                       {site.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+          </div>
+        ) : null}
+        {taskSource === 'asana' && asanaConnected ? (
+          <div className="flex items-center gap-2">
+            {asanaWorkspaces.length > 1 ? (
+              <Select
+                value={selectedAsanaWorkspaceGid ?? undefined}
+                onValueChange={(value) => {
+                  setSelectedAsanaTask(null)
+                  resetAsanaProjectView()
+                  void selectAsanaWorkspace(value)
+                }}
+              >
+                <SelectTrigger className="h-8 w-[220px] rounded-md border-border/50 bg-muted/50 text-xs font-medium shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {asanaWorkspaces.map((workspace) => (
+                    <SelectItem key={workspace.gid} value={workspace.gid}>
+                      {workspace.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

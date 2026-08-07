@@ -1,4 +1,5 @@
 import { getLinearOrganizationUrlKeyFromIssueUrl } from '../linear/links'
+import type { AsanaTask } from '../asana-types'
 import type { FolderWorkspaceLinkedTask } from '../folder-workspace-types'
 import type { JiraIssue } from '../jira-types'
 import type { LinearIssue } from '../linear/issue-types'
@@ -37,6 +38,11 @@ export type JiraWorkspaceSource = WorkspaceSourceLinkedItem & {
   type: 'issue'
 }
 
+export type AsanaWorkspaceSource = WorkspaceSourceLinkedItem & {
+  provider: 'asana'
+  type: 'issue'
+}
+
 export type WorkspaceSourceItemLike = Omit<WorkspaceSourceLinkedItem, 'provider'> & {
   provider?: WorkspaceSourceProvider
 }
@@ -49,6 +55,7 @@ export type WorkspaceSourceSelectionKind =
   | 'branch'
   | 'linear'
   | 'jira'
+  | 'asana'
 
 export type WorkspaceSourceSelection = {
   kind: WorkspaceSourceSelectionKind
@@ -78,6 +85,14 @@ function isJiraIssueUrl(url: string): boolean {
   }
 }
 
+function isAsanaTaskUrl(url: string): boolean {
+  try {
+    return /(?:^|\.)app\.asana\.com$/i.test(new URL(url).hostname)
+  } catch {
+    return /(?:^|\.)app\.asana\.com\//i.test(url)
+  }
+}
+
 export function getWorkspaceSourceProvider(item: WorkspaceSourceItemLike): WorkspaceSourceProvider {
   if (item.provider) {
     return item.provider
@@ -87,6 +102,9 @@ export function getWorkspaceSourceProvider(item: WorkspaceSourceItemLike): Works
   }
   if (item.jiraIdentifier || isJiraIssueUrl(item.url)) {
     return 'jira'
+  }
+  if (item.asanaIdentifier || isAsanaTaskUrl(item.url)) {
+    return 'asana'
   }
   if (item.type === 'mr' || isGitLabIssueUrl(item.url)) {
     return 'gitlab'
@@ -157,6 +175,20 @@ export function buildJiraWorkspaceSource(
   }
 }
 
+export function buildAsanaWorkspaceSource(
+  task: Pick<AsanaTask, 'gid' | 'name' | 'permalinkUrl' | 'workspace'>
+): AsanaWorkspaceSource {
+  return {
+    provider: 'asana',
+    type: 'issue',
+    number: 0,
+    title: task.name,
+    url: task.permalinkUrl,
+    asanaIdentifier: task.gid,
+    ...(task.workspace?.gid ? { asanaWorkspaceGid: task.workspace.gid } : {})
+  }
+}
+
 export function shouldApplyWorkspaceSourceAutoName(args: {
   currentName: string
   lastAutoName: string
@@ -198,17 +230,22 @@ export function buildWorkspaceSourceSelection(args: {
       ? 'linear'
       : provider === 'jira'
         ? 'jira'
-        : provider === 'gitlab'
-          ? linkedWorkItem.type === 'mr'
-            ? 'gitlab-mr'
-            : 'gitlab-issue'
-          : linkedWorkItem.type === 'pr'
-            ? 'github-pr'
-            : 'github-issue'
+        : provider === 'asana'
+          ? 'asana'
+          : provider === 'gitlab'
+            ? linkedWorkItem.type === 'mr'
+              ? 'gitlab-mr'
+              : 'gitlab-issue'
+            : linkedWorkItem.type === 'pr'
+              ? 'github-pr'
+              : 'github-issue'
   return {
     kind,
     label:
-      provider === 'linear' || provider === 'jira' || linkedWorkItem.number === 0
+      provider === 'linear' ||
+      provider === 'jira' ||
+      provider === 'asana' ||
+      linkedWorkItem.number === 0
         ? linkedWorkItem.title
         : `#${linkedWorkItem.number} ${linkedWorkItem.title}`,
     url: linkedWorkItem.url
@@ -222,5 +259,5 @@ export function shouldPreserveWorkspaceSourceOnRepoChange(
     return false
   }
   const provider = getWorkspaceSourceProvider(item)
-  return provider === 'linear' || provider === 'jira'
+  return provider === 'linear' || provider === 'jira' || provider === 'asana'
 }
