@@ -84,15 +84,23 @@ export const ASANA_METHODS: RpcAnyMethod[] = [
       projectGid: requiredString('Project GID is required'),
       limit: OptionalFiniteNumber,
       includeCompleted: z.boolean().optional(),
-      workspaceGid: OptionalString
+      workspaceGid: OptionalString,
+      sectionGid: OptionalString
     }),
     handler: async (params, { runtime }) =>
       runtime.asanaListProjectTasks(
         params.projectGid.trim(),
         params.limit,
         params.includeCompleted,
-        params.workspaceGid
+        params.workspaceGid,
+        params.sectionGid
       )
+  }),
+  defineMethod({
+    name: 'asana.listSubtasks',
+    params: z.object({ gid: requiredString('Task GID is required'), workspaceGid: OptionalString }),
+    handler: async (params, { runtime }) =>
+      runtime.asanaListSubtasks(params.gid.trim(), params.workspaceGid)
   }),
   defineMethod({
     name: 'asana.searchTasks',
