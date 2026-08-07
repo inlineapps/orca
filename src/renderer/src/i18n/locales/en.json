@@ -15209,7 +15209,12 @@
         "startWorkspace": "Start workspace",
         "openInAsana": "Open in Asana",
         "dueDate": "Due {{value0}}",
-        "noSection": "No section"
+        "noSection": "No section",
+        "toggleSubtasks": "Toggle subtasks",
+        "subtaskCount": "{{value0}} subtasks",
+        "loading": "Loading tasks…",
+        "emptySection": "No matching tasks",
+        "loadingSubtasks": "Loading subtasks…"
       },
       "AsanaTaskWorkspace": {
         "asanaTasks": "Asana tasks",
@@ -15220,7 +15225,9 @@
         "assignedTo": "Assigned to {{value0}}",
         "due": "Due {{value0}}",
         "projectCount": "{{value0}} projects",
-        "startWorkspace": "Start workspace"
+        "startWorkspace": "Start workspace",
+        "subtasks": "Subtasks",
+        "loadingSubtasks": "Loading subtasks…"
       },
       "AsanaConnectDialog": {
         "connectionFailed": "Connection failed",

@@ -152,13 +152,38 @@ export async function asanaListProjectTasks(
   projectGid: string,
   limit?: number,
   includeCompleted = false,
-  workspaceGid?: string | null
+  workspaceGid?: string | null,
+  sectionGid?: string | null
 ): Promise<AsanaProjectTasks> {
   const target = getAsanaRuntimeTarget(settings)
-  const args = { projectGid, limit, includeCompleted, workspaceGid: workspaceGid ?? undefined }
+  const args = {
+    projectGid,
+    limit,
+    includeCompleted,
+    workspaceGid: workspaceGid ?? undefined,
+    sectionGid: sectionGid ?? undefined
+  }
+  const result =
+    target.kind === 'environment'
+      ? await callAsana<AsanaProjectTasks>(settings, 'asana.listProjectTasks', args, 45_000)
+      : await window.api.asana.listProjectTasks(args)
+  if (!sectionGid) {
+    return result
+  }
+  // Why: a host that predates section reads ignores sectionGid and answers with the whole project.
+  return { ...result, tasks: result.tasks.filter((task) => task.sectionGid === sectionGid) }
+}
+
+export async function asanaListSubtasks(
+  settings: RuntimeAsanaSettings,
+  gid: string,
+  workspaceGid?: string | null
+): Promise<AsanaTask[]> {
+  const target = getAsanaRuntimeTarget(settings)
+  const args = { gid, workspaceGid: workspaceGid ?? undefined }
   return target.kind === 'environment'
-    ? callAsana<AsanaProjectTasks>(settings, 'asana.listProjectTasks', args, 45_000)
-    : window.api.asana.listProjectTasks(args)
+    ? callAsana<AsanaTask[]>(settings, 'asana.listSubtasks', args)
+    : window.api.asana.listSubtasks(args)
 }
 
 export async function asanaSearchTasks(
