@@ -99,7 +99,7 @@ describe('deriveIntegrationStepStates', () => {
   })
 
   it('marks tasks done if a tracker is already connected before a code host', () => {
-    // A pre-existing Linear/Jira connection is a real, truthful task source even
+    // A pre-existing task-provider connection is a real, truthful task source even
     // if the user has not yet connected a code host for review.
     expect(
       deriveIntegrationStepStates({
