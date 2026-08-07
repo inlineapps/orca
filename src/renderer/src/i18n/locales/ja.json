@@ -12364,7 +12364,7 @@
             "list_end": ", and ",
             "list_pair": " と ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "件の Issue をタスクとして利用できます · チームが Linear や Jira で計画している場合は追加してください",
+            "code_host_tasks_summary": "件の Issue をタスクとして利用できます · チームが Linear、Jira、Asana で計画している場合は追加してください",
             "code_host_tasks_caption": "コードホストの Issue も、タスクとして利用できます。",
             "review_step_title": "Agent の作業中に PR の状態を確認",
             "review_step_description": "レビュープロバイダーを接続すると、Orca が PR や MR の状態・チェック・レビューを表示できます。",

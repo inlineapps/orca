@@ -27,6 +27,10 @@ type StoreState = {
   jiraStatusChecked: boolean
   jiraStatusContextKey: string | null
   checkJiraConnection: () => Promise<void>
+  asanaStatus: { connected: boolean; workspaces?: unknown[]; projects?: unknown[] }
+  asanaStatusChecked: boolean
+  asanaStatusContextKey: string | null
+  checkAsanaConnection: () => Promise<void>
   testJiraConnection: () => Promise<{ ok: boolean; error?: string }>
   disconnectJira: () => Promise<void>
 }
@@ -107,7 +111,11 @@ function installStore(preflightStatus: PreflightStatus): void {
     jiraStatusContextKey: providerContextKey,
     checkJiraConnection: vi.fn(async () => {}),
     testJiraConnection: vi.fn(async () => ({ ok: true })),
-    disconnectJira: vi.fn(async () => {})
+    disconnectJira: vi.fn(async () => {}),
+    asanaStatus: { connected: false, workspaces: [], projects: [] },
+    asanaStatusChecked: true,
+    asanaStatusContextKey: providerContextKey,
+    checkAsanaConnection: vi.fn(async () => {})
   }
 }
 
@@ -179,9 +187,9 @@ describe('ConnectIntegrationsList', () => {
 
     expect(markup).toContain('GitHub')
     expect(markup).toContain('issues available as tasks')
-    expect(markup).toContain('add Linear or Jira if your team plans work there')
+    expect(markup).toContain('add Linear, Jira, or Asana if your team plans work there')
     expect(markup).not.toContain('Use GitHub issues')
-    // The step is done but stays expanded so Linear/Jira remain discoverable
+    // The step is done but stays expanded so task providers remain discoverable
     // for teams that plan work in a dedicated tracker.
     expect(markup).toContain('Add Linear access')
     expect(markup).toContain('Connect Jira')

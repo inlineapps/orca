@@ -12384,7 +12384,7 @@
             "list_end": "，以及",
             "list_pair": " 和 ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "议题可作为任务使用 · 如果团队在 Linear 或 Jira 中规划工作，也可以添加它们",
+            "code_host_tasks_summary": "议题可作为任务使用 · 如果团队在 Linear、Jira 或 Asana 中规划工作，也可以添加它们",
             "code_host_tasks_caption": "代码托管平台的议题也可以作为任务使用。",
             "review_step_title": "在智能体工作时查看 PR 状态",
             "review_step_description": "连接评审提供方，让 Orca 显示 PR 或 MR 状态、检查和评审。",
