@@ -57,13 +57,15 @@ async function fetchProjectTaskPages(
   client: AsanaClient,
   projectGid: string,
   limit: number,
-  includeCompleted: boolean
+  includeCompleted: boolean,
+  sectionGid: string | null
 ): Promise<{ tasks: AsanaTask[]; hasMore: boolean }> {
   const tasks: AsanaTask[] = []
   let offset: string | null = null
   do {
+    // Asana rejects project and section together, so a section read stands on its own.
     const query = new URLSearchParams({
-      project: projectGid,
+      ...(sectionGid ? { section: sectionGid } : { project: projectGid }),
       opt_fields: PROJECT_TASK_FIELDS,
       limit: String(PAGE_LIMIT)
     })
@@ -97,17 +99,20 @@ export async function listProjectTasks(
   projectGid: string,
   limit = PROJECT_TASK_MAX,
   includeCompleted = false,
-  workspaceGid?: string | null
+  workspaceGid?: string | null,
+  sectionGid?: string | null
 ): Promise<AsanaProjectTasks> {
   const id = projectGid.trim()
   if (!id) {
     return { sections: [], tasks: [], hasMore: false }
   }
+  const section = sectionGid?.trim() || null
   const bounded = Math.min(Math.max(1, Math.floor(limit)), PROJECT_TASK_MAX)
   const client = getClient(workspaceGid)
+  // A section read already knows its section, so it skips the extra sections round-trip.
   const [sections, page] = await Promise.all([
-    listSections(id, workspaceGid),
-    fetchProjectTaskPages(client, id, bounded, includeCompleted)
+    section ? Promise.resolve<AsanaSection[]>([]) : listSections(id, workspaceGid),
+    fetchProjectTaskPages(client, id, bounded, includeCompleted, section)
   ])
   return { sections, tasks: page.tasks, hasMore: page.hasMore }
 }

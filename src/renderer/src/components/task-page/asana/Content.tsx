@@ -16,7 +16,9 @@ export function TaskPageAsanaContent({
     openAsanaDetailPage,
     closeTaskDetailPage,
     asanaError,
-    asanaTaskGroups
+    asanaBoardGroups,
+    asanaSubtasks,
+    onToggleAsanaSection
   } = model
   if (model.taskSource !== 'asana') {
     return null
@@ -28,11 +30,13 @@ export function TaskPageAsanaContent({
       setAsanaConnectOpen={setAsanaConnectOpen}
       hideTaskSource={hideTaskSource}
       selectedAsanaTask={selectedAsanaTask}
+      subtasks={asanaSubtasks}
       handleUseAsanaTask={handleUseAsanaTask}
       openAsanaDetailPage={openAsanaDetailPage}
       closeTaskDetailPage={closeTaskDetailPage}
       asanaError={asanaError}
-      asanaTaskGroups={asanaTaskGroups}
+      asanaBoardGroups={asanaBoardGroups}
+      onToggleSection={onToggleAsanaSection}
     />
   )
 }

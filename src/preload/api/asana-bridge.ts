@@ -13,6 +13,7 @@ export const asanaApi = {
   refreshProjects: (args) => ipcRenderer.invoke('asana:refreshProjects', args),
   listSections: (args) => ipcRenderer.invoke('asana:listSections', args),
   listProjectTasks: (args) => ipcRenderer.invoke('asana:listProjectTasks', args),
+  listSubtasks: (args) => ipcRenderer.invoke('asana:listSubtasks', args),
   searchTasks: (args) => ipcRenderer.invoke('asana:searchTasks', args),
   getTask: (args) => ipcRenderer.invoke('asana:getTask', args)
 } satisfies PreloadApi['asana']

@@ -15,6 +15,7 @@ import {
   getTask as getAsanaTask,
   listAssignedTasks as listAsanaAssignedTasks,
   listProjects as listAsanaProjects,
+  listSubtasks as listAsanaSubtasks,
   searchTasks as searchAsanaTasks
 } from '../asana/tasks'
 
@@ -71,14 +72,20 @@ export class RuntimeAsanaCommands {
     projectGid: string,
     limit = ASANA_PROJECT_TASK_MAX,
     includeCompleted = false,
-    workspaceGid?: string
+    workspaceGid?: string,
+    sectionGid?: string
   ): ReturnType<typeof listAsanaProjectTasks> {
     return listAsanaProjectTasks(
       projectGid,
       Math.min(Math.max(1, limit), ASANA_PROJECT_TASK_MAX),
       includeCompleted,
-      workspaceGid
+      workspaceGid,
+      sectionGid
     )
+  }
+
+  asanaListSubtasks(gid: string, workspaceGid?: string): ReturnType<typeof listAsanaSubtasks> {
+    return listAsanaSubtasks(gid, workspaceGid)
   }
 
   asanaSearchTasks(

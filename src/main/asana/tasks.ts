@@ -31,7 +31,8 @@ export const TASK_FIELDS = [
   'projects.permalink_url',
   'parent.gid',
   'parent.name',
-  'parent.permalink_url'
+  'parent.permalink_url',
+  'num_subtasks'
 ].join(',')
 
 type AsanaRecord = Record<string, unknown>
@@ -126,7 +127,8 @@ export function mapAsanaTask(value: unknown): AsanaTask | null {
     assignee,
     workspace,
     projects,
-    parent
+    parent,
+    ...(typeof raw.num_subtasks === 'number' ? { numSubtasks: raw.num_subtasks } : {})
   }
 }
 
@@ -203,6 +205,17 @@ export async function searchTasks(
       .filter((task) => `${task.name}\n${task.notes}`.toLocaleLowerCase().includes(normalizedQuery))
       .slice(0, Math.min(Math.max(1, limit), 100))
   }
+}
+
+export async function listSubtasks(
+  taskGid: string,
+  workspaceGid?: string | null
+): Promise<AsanaTask[]> {
+  const id = taskGid.trim()
+  if (!id) {
+    return []
+  }
+  return listTaskPage(getClient(workspaceGid), `/tasks/${encodeURIComponent(id)}/subtasks`)
 }
 
 export async function getTask(gid: string): Promise<AsanaTask | null> {
