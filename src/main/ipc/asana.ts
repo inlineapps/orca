@@ -7,7 +7,7 @@ import {
   selectWorkspace,
   testConnection
 } from '../asana/client'
-import { getTask, listAssignedTasks, listProjects, searchTasks } from '../asana/tasks'
+import { getTask, listAssignedTasks, listProjects, listSubtasks, searchTasks } from '../asana/tasks'
 import { listProjectTasks, listSections, PROJECT_TASK_MAX } from '../asana/project-tasks'
 import type { AsanaWorkspace } from '../../shared/asana-types'
 
@@ -86,6 +86,7 @@ export function registerAsanaHandlers(): void {
         limit?: number
         includeCompleted?: boolean
         workspaceGid?: string
+        sectionGid?: string
       }
     ) => {
       if (typeof args?.projectGid !== 'string' || !args.projectGid.trim()) {
@@ -95,8 +96,19 @@ export function registerAsanaHandlers(): void {
         args.projectGid.trim(),
         clampProjectTaskLimit(args.limit),
         args.includeCompleted === true,
-        normalizeWorkspaceGid(args.workspaceGid)
+        normalizeWorkspaceGid(args.workspaceGid),
+        typeof args.sectionGid === 'string' ? args.sectionGid.trim() : null
       )
+    }
+  )
+
+  ipcMain.handle(
+    'asana:listSubtasks',
+    async (_event, args: { gid: string; workspaceGid?: string }) => {
+      if (typeof args?.gid !== 'string' || !args.gid.trim()) {
+        return []
+      }
+      return listSubtasks(args.gid.trim(), normalizeWorkspaceGid(args.workspaceGid))
     }
   )
 

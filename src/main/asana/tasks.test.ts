@@ -29,7 +29,7 @@ vi.mock('./client', () => ({
 }))
 
 import { AsanaApiError } from './client'
-import { listAssignedTasks, mapAsanaTask, searchTasks } from './tasks'
+import { listAssignedTasks, listSubtasks, mapAsanaTask, searchTasks } from './tasks'
 
 describe('Asana task mapping and reads', () => {
   beforeEach(() => {
@@ -130,5 +130,34 @@ describe('Asana task mapping and reads', () => {
       { token: 'pat-37', workspaceGid: 'workspace-9284' },
       expect.stringContaining('assignee=me&workspace=workspace-9284&completed_since=now')
     )
+  })
+  it('reads subtasks for a task and maps the subtask count', async () => {
+    asanaRequestMock.mockResolvedValue({
+      data: [
+        {
+          gid: '7712',
+          name: 'Draft migration plan',
+          notes: '',
+          completed: false,
+          permalink_url: 'https://app.asana.com/0/12066/7712',
+          projects: [],
+          num_subtasks: 3
+        }
+      ]
+    })
+
+    await expect(listSubtasks('  4485  ', 'workspace-9284')).resolves.toMatchObject([
+      { gid: '7712', numSubtasks: 3 }
+    ])
+    expect(getClientMock).toHaveBeenCalledWith('workspace-9284')
+    expect(asanaRequestMock).toHaveBeenCalledWith(
+      { token: 'pat-37', workspaceGid: 'workspace-9284' },
+      expect.stringContaining('/tasks/4485/subtasks?')
+    )
+  })
+
+  it('returns nothing for a blank task gid without calling Asana', async () => {
+    await expect(listSubtasks('   ')).resolves.toEqual([])
+    expect(asanaRequestMock).not.toHaveBeenCalled()
   })
 })
