@@ -90,6 +90,12 @@ import type {
   GitHubOwnerRepo,
   GitHubWorkItem,
   JiraProjectStatusOrder,
+  AsanaConnectResult,
+  AsanaConnectionStatus,
+  AsanaProject,
+  AsanaProjectTasks,
+  AsanaSection,
+  AsanaTask,
   GitPushTarget,
   GitStagingArea,
   GitForkSyncExpectedUpstream,
@@ -1956,6 +1962,41 @@ const api = {
       projectKey: string
       siteId?: string
     }): Promise<JiraProjectStatusOrder> => ipcRenderer.invoke('jira:getProjectStatusOrder', args)
+  },
+
+  asana: {
+    connect: (args: { token: string }): Promise<AsanaConnectResult> =>
+      ipcRenderer.invoke('asana:connect', args),
+    disconnect: (): Promise<void> => ipcRenderer.invoke('asana:disconnect'),
+    selectWorkspace: (args: { workspaceGid: string }): Promise<AsanaConnectionStatus> =>
+      ipcRenderer.invoke('asana:selectWorkspace', args),
+    status: (): Promise<AsanaConnectionStatus> => ipcRenderer.invoke('asana:status'),
+    readStatus: (): Promise<AsanaConnectionStatus> => ipcRenderer.invoke('asana:readStatus'),
+    testConnection: (): Promise<AsanaConnectResult> => ipcRenderer.invoke('asana:testConnection'),
+    listProjects: (args?: { workspaceGid?: string }): Promise<AsanaProject[]> =>
+      ipcRenderer.invoke('asana:listProjects', args),
+    listAssignedTasks: (args?: {
+      limit?: number
+      workspaceGid?: string
+      includeCompleted?: boolean
+    }): Promise<AsanaTask[]> => ipcRenderer.invoke('asana:listAssignedTasks', args),
+    refreshProjects: (args?: { workspaceGid?: string }): Promise<AsanaConnectionStatus> =>
+      ipcRenderer.invoke('asana:refreshProjects', args),
+    listSections: (args: { projectGid: string; workspaceGid?: string }): Promise<AsanaSection[]> =>
+      ipcRenderer.invoke('asana:listSections', args),
+    listProjectTasks: (args: {
+      projectGid: string
+      limit?: number
+      includeCompleted?: boolean
+      workspaceGid?: string
+    }): Promise<AsanaProjectTasks> => ipcRenderer.invoke('asana:listProjectTasks', args),
+    searchTasks: (args: {
+      query: string
+      limit?: number
+      workspaceGid?: string
+    }): Promise<AsanaTask[]> => ipcRenderer.invoke('asana:searchTasks', args),
+    getTask: (args: { gid: string }): Promise<AsanaTask | null> =>
+      ipcRenderer.invoke('asana:getTask', args)
   },
 
   starNag: {

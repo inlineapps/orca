@@ -54,6 +54,16 @@ import type { CodexResetCreditAttemptLedger } from './codex-reset-credit-attempt
 import type { TaskSourceContext } from './task-source-context'
 import type { SetupRunnerShell } from './setup-runner-command'
 import type { AiVaultSessionTitle } from './ai-vault-session-title'
+export type {
+  AsanaConnectResult,
+  AsanaConnectionStatus,
+  AsanaProject,
+  AsanaProjectTasks,
+  AsanaSection,
+  AsanaTask,
+  AsanaViewer,
+  AsanaWorkspace
+} from './asana-types'
 
 // Re-exported for backward compat with renderer call sites that import
 // `WorkspaceCreateTelemetrySource` from '../../../shared/types'.
@@ -357,13 +367,15 @@ export type FolderWorkspace = {
 }
 
 export type WorkspaceLinkedItem = {
-  provider: 'github' | 'gitlab' | 'linear' | 'jira'
+  provider: 'github' | 'gitlab' | 'linear' | 'jira' | 'asana'
   type: 'issue' | 'pr' | 'mr'
   number: number
   title: string
   url: string
   linearIdentifier?: string
   jiraIdentifier?: string
+  asanaIdentifier?: string
+  asanaWorkspaceGid?: string
   repoId?: string
 }
 
@@ -2995,6 +3007,8 @@ export type GlobalSettings = {
   visibleTaskProviders: TaskProvider[]
   /** Why: one-shot guard to make Jira visible for existing profiles once, without re-adding after a later opt-out. */
   visibleTaskProvidersDefaultedForJira: boolean
+  /** Why: one-shot guard to make Asana visible for existing profiles once, without re-adding after a later opt-out. */
+  visibleTaskProvidersDefaultedForAsana: boolean
   /** Persisted repo selection (cross-repo tasks view). null = sticky-all (includes future-added repos);
    *  string[] = frozen curated subset (ineligible ids dropped on load; empty after drop is treated as null). */
   defaultRepoSelection: string[] | null

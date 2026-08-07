@@ -12433,7 +12433,7 @@
             "list_end": " y ",
             "list_pair": " y ",
             "list_mid": ", ",
-            "code_host_tasks_summary": "issues disponibles como tareas · agrega Linear o Jira si tu equipo planifica el trabajo allí",
+            "code_host_tasks_summary": "issues disponibles como tareas · agrega Linear, Jira o Asana si tu equipo planifica el trabajo allí",
             "code_host_tasks_caption": "Los issues de tu proveedor de código también funcionan como tareas.",
             "review_step_title": "Ver el estado de PR mientras trabajan los agentes",
             "review_step_description": "Conecta un proveedor de revisión para que Orca pueda mostrar el estado de PR o MR, checks y revisiones.",

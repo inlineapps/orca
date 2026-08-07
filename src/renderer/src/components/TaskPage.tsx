@@ -89,6 +89,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import TaskProjectSourceCombobox from '@/components/task-project-source-combobox'
 import { JiraConnectDialog } from '@/components/jira-connect-dialog'
+import { AsanaConnectDialog } from '@/components/asana-connect-dialog'
 import { LinearApiKeyDialog } from '@/components/linear-api-key-dialog'
 import { LinearScopeSelector } from '@/components/linear-scope-selector'
 import RepoBadgeLabel from '@/components/repo/RepoBadgeLabel'
@@ -199,6 +200,10 @@ import {
   LinearProjectTable
 } from '@/components/linear-project-view-surfaces'
 import JiraIssueWorkspace from '@/components/JiraIssueWorkspace'
+import AsanaTaskWorkspace from '@/components/AsanaTaskWorkspace'
+import { AsanaTaskList } from '@/components/AsanaTaskList'
+import { AsanaProjectPicker } from '@/components/asana-project-picker'
+import { AsanaTaskFilterMenu } from '@/components/asana-task-filter-menu'
 import { TaskPageJiraIssueList } from '@/components/task-page-jira-issue-list'
 import {
   getSingleJiraProjectScope,
@@ -206,6 +211,7 @@ import {
   loadTaskPageJiraProjectStatusOrder
 } from '@/components/task-page-jira-status-order'
 import { JiraIcon } from '@/components/icons/JiraIcon'
+import { AsanaIcon } from '@/components/icons/AsanaIcon'
 import { cn } from '@/lib/utils'
 import {
   getLinkedWorkItemSuggestedName,
@@ -221,7 +227,19 @@ import {
   writeLinearBoardIssueDragData
 } from '@/lib/linear-board-drag-payload'
 import { projectHostSetupProjectionFromRepos } from '../../../shared/project-host-setup-projection'
-import { TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY } from '../../../shared/protocol-version'
+import {
+  ASANA_PROJECT_VIEW_RUNTIME_CAPABILITY,
+  ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
+  TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY
+} from '../../../shared/protocol-version'
+import {
+  asanaFilterNeedsCompletedTasks,
+  DEFAULT_ASANA_TASK_FILTER,
+  filterAsanaTasks,
+  searchAsanaTasksByText,
+  type AsanaTaskFilter
+} from '../../../shared/asana-task-filter'
+import { groupAsanaTasksBySection } from '../../../shared/asana-task-sections'
 import {
   getTaskSourceCacheScope,
   getTaskSourceRuntimeSettings,
@@ -347,6 +365,9 @@ import {
 } from '../../../shared/github-pr-merge-methods'
 import type {
   GitHubOwnerRepo,
+  AsanaProjectTasks,
+  AsanaSection,
+  AsanaTask,
   GitHubAssignableUser,
   GitHubPRMergeMethod,
   GitHubIssueUpdate,
@@ -405,6 +426,11 @@ import {
   jiraListPriorities
 } from '@/runtime/runtime-jira-client'
 import {
+  asanaListAssignedTasks,
+  asanaListProjectTasks,
+  asanaSearchTasks
+} from '@/runtime/runtime-asana-client'
+import {
   sortJiraIssues,
   type JiraIssueSortColumn,
   type JiraIssueSortDirection,
@@ -458,6 +484,7 @@ function isGitLabIssueFilter(
 const TASK_SEARCH_DEBOUNCE_MS = 300
 const LINEAR_ITEM_LIMIT = 36
 const JIRA_ITEM_LIMIT = 50
+const ASANA_ITEM_LIMIT = 50
 const PR_CHECKS_EAGER_PREFETCH_LIMIT = 20
 
 const GITHUB_TASK_GRID_CLASS =
@@ -542,7 +569,8 @@ function buildGitLabProviderIdentity(projectRef: GitLabProjectRef) {
 
 function getTaskSourceHostAvailabilityForHost(
   host: ExecutionHostRegistryEntry | null | undefined,
-  hostId: TaskSourceContext['hostId']
+  hostId: TaskSourceContext['hostId'],
+  provider?: TaskProvider
 ): TaskSourceHostAvailability | null {
   if (!host) {
     return null
@@ -555,6 +583,15 @@ function getTaskSourceHostAvailabilityForHost(
       }
     }
     if (!host.capabilities.includes(TASK_SOURCE_CONTEXT_RUNTIME_CAPABILITY)) {
+      return {
+        hostId,
+        reason: 'missing-task-source-capability'
+      }
+    }
+    if (
+      provider === 'asana' &&
+      !host.capabilities.includes(ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY)
+    ) {
       return {
         hostId,
         reason: 'missing-task-source-capability'
@@ -3213,6 +3250,9 @@ export default function TaskPage(): React.JSX.Element {
   const jiraStatus = useAppStore((s) => s.jiraStatus)
   const jiraStatusChecked = useAppStore((s) => s.jiraStatusChecked)
   const jiraStatusContextKey = useAppStore((s) => s.jiraStatusContextKey)
+  const asanaStatus = useAppStore((s) => s.asanaStatus)
+  const asanaStatusChecked = useAppStore((s) => s.asanaStatusChecked)
+  const asanaStatusContextKey = useAppStore((s) => s.asanaStatusContextKey)
   const selectJiraSite = useAppStore((s) => s.selectJiraSite)
   const searchJiraIssues = useAppStore((s) => s.searchJiraIssues)
   const listJiraIssues = useAppStore((s) => s.listJiraIssues)
@@ -3222,11 +3262,14 @@ export default function TaskPage(): React.JSX.Element {
   providerRuntimeContextKeyRef.current = providerRuntimeContextKey
   const linearStatusCurrent = linearStatusContextKey === providerRuntimeContextKey
   const jiraStatusCurrent = jiraStatusContextKey === providerRuntimeContextKey
+  const asanaStatusCurrent = asanaStatusContextKey === providerRuntimeContextKey
   const preflightStatusCurrent = preflightStatusContextKey === expectedPreflightContextKey
   const linearStatusReady = linearStatusCurrent && linearStatusChecked
   const jiraStatusReady = jiraStatusCurrent && jiraStatusChecked
   const linearConnected = linearStatusCurrent && linearStatus.connected
   const jiraConnected = jiraStatusCurrent && jiraStatus.connected
+  const asanaStatusReady = asanaStatusCurrent && asanaStatusChecked
+  const asanaConnected = asanaStatusCurrent && asanaStatus.connected
   const submitShortcutLabel = getScreenSubmitShortcutLabel()
   const eligibleRepos = useMemo(() => getTaskEligibleRepos(repos), [repos])
 
@@ -3321,6 +3364,13 @@ export default function TaskPage(): React.JSX.Element {
   const selectedJiraSite =
     selectedJiraSiteId && selectedJiraSiteId !== 'all'
       ? (jiraSites.find((site) => site.id === selectedJiraSiteId) ?? null)
+      : null
+  const asanaWorkspaces = asanaStatus.workspaces ?? []
+  const selectedAsanaWorkspaceGid =
+    asanaStatus.activeWorkspaceGid ?? asanaWorkspaces[0]?.gid ?? null
+  const selectedAsanaWorkspace =
+    selectedAsanaWorkspaceGid && selectedAsanaWorkspaceGid !== 'all'
+      ? (asanaWorkspaces.find((workspace) => workspace.gid === selectedAsanaWorkspaceGid) ?? null)
       : null
   const preferredVisibleTaskProviders = useMemo(
     () => normalizeVisibleTaskProviders(settings?.visibleTaskProviders),
@@ -3611,17 +3661,51 @@ export default function TaskPage(): React.JSX.Element {
       selectedJiraSiteId
     ]
   )
+  const asanaTaskSourceContext = useMemo(
+    () =>
+      normalizeTaskSourceContext({
+        provider: 'asana',
+        projectId: fallbackTaskSourceProjectId,
+        hostId: accountBackedTaskSourceHostId,
+        providerIdentity: {
+          provider: 'asana',
+          workspaceGid:
+            selectedAsanaWorkspaceGid && selectedAsanaWorkspaceGid !== 'all'
+              ? selectedAsanaWorkspaceGid
+              : null,
+          workspaceName: selectedAsanaWorkspace?.name ?? null
+        },
+        accountLabel: selectedAsanaWorkspace?.name ?? null
+      }),
+    [
+      accountBackedTaskSourceHostId,
+      fallbackTaskSourceProjectId,
+      selectedAsanaWorkspace,
+      selectedAsanaWorkspaceGid
+    ]
+  )
   const jiraTaskSourceScopeKey = jiraTaskSourceContext
     ? getTaskSourceCacheScope(jiraTaskSourceContext)
     : providerRuntimeContextKey
   const accountBackedTaskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (taskSource !== 'linear' && taskSource !== 'jira') {
+    if (taskSource !== 'linear' && taskSource !== 'jira' && taskSource !== 'asana') {
       return []
     }
     const host = hostRegistryById.get(accountBackedTaskSourceHostId)
-    const availability = getTaskSourceHostAvailabilityForHost(host, accountBackedTaskSourceHostId)
+    const availability = getTaskSourceHostAvailabilityForHost(
+      host,
+      accountBackedTaskSourceHostId,
+      taskSource
+    )
     return availability ? [availability] : []
   }, [accountBackedTaskSourceHostId, hostRegistryById, taskSource])
+  const asanaProjectViewSupported = useMemo(() => {
+    const host = hostRegistryById.get(accountBackedTaskSourceHostId)
+    return (
+      host?.kind !== 'runtime' ||
+      (host.capabilities?.includes(ASANA_PROJECT_VIEW_RUNTIME_CAPABILITY) ?? false)
+    )
+  }, [accountBackedTaskSourceHostId, hostRegistryById])
   const taskSourceAvailabilityNoticeByProvider = useMemo<
     Partial<Record<TaskProvider, TaskSourceAvailabilityNotice>>
   >(() => {
@@ -3648,6 +3732,12 @@ export default function TaskPage(): React.JSX.Element {
       accountBackedTaskSourceHostId
     )
     const accountAvailability = accountHostAvailability ? [accountHostAvailability] : []
+    const asanaHostAvailability = getTaskSourceHostAvailabilityForHost(
+      accountHost,
+      accountBackedTaskSourceHostId,
+      'asana'
+    )
+    const asanaAvailability = asanaHostAvailability ? [asanaHostAvailability] : []
     const labelFor = (provider: TaskProvider): string =>
       sourceOptions.find((source) => source.id === provider)?.label ?? provider
     return {
@@ -3688,6 +3778,13 @@ export default function TaskPage(): React.JSX.Element {
           sourceCount: 1,
           hostLabelById,
           hostAvailability: accountAvailability
+        }) ?? undefined,
+      asana:
+        getTaskSourceAvailabilityNotice({
+          providerLabel: labelFor('asana'),
+          sourceCount: 1,
+          hostLabelById,
+          hostAvailability: asanaAvailability
         }) ?? undefined
     }
   }, [
@@ -3709,7 +3806,7 @@ export default function TaskPage(): React.JSX.Element {
       providerLabel,
       repoContexts: taskSourceRepoContexts,
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       accountHostId: accountBackedTaskSourceHostId,
@@ -3717,11 +3814,13 @@ export default function TaskPage(): React.JSX.Element {
       selectedRepoCount: selectedRepos.length,
       linearWorkspaceName:
         selectedLinearWorkspace?.organizationName ?? selectedLinearWorkspace?.id ?? null,
-      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null
+      jiraSiteName: selectedJiraSite?.displayName ?? selectedJiraSite?.siteUrl ?? null,
+      asanaWorkspaceName: selectedAsanaWorkspace?.name ?? null
     })
   }, [
     selectedJiraSite,
     selectedLinearWorkspace,
+    selectedAsanaWorkspace,
     selectedRepos.length,
     sourceOptions,
     taskSource,
@@ -3737,11 +3836,11 @@ export default function TaskPage(): React.JSX.Element {
     return getTaskSourceAvailabilityNotice({
       providerLabel,
       sourceCount:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? 1
           : Math.max(1, taskSourceRepoContexts.length),
       hostAvailability:
-        taskSource === 'linear' || taskSource === 'jira'
+        taskSource === 'linear' || taskSource === 'jira' || taskSource === 'asana'
           ? accountBackedTaskSourceHostAvailability
           : taskSourceHostAvailability,
       hostLabelById
@@ -4376,7 +4475,9 @@ export default function TaskPage(): React.JSX.Element {
         openLinearIssue: undefined,
         openLinearSourceContext: undefined,
         openJiraIssue: undefined,
-        openJiraSourceContext: undefined
+        openJiraSourceContext: undefined,
+        openAsanaTask: undefined,
+        openAsanaSourceContext: undefined
       }
     }))
   }, [clearSelectedLinearIssue, setDialogWorkItem])
@@ -4440,6 +4541,173 @@ export default function TaskPage(): React.JSX.Element {
     },
     [jiraTaskSourceContext, openTaskPage]
   )
+
+  const [selectedAsanaTaskGid, setSelectedAsanaTaskGid] = useState<string | null>(null)
+  const [selectedAsanaTaskFallback, setSelectedAsanaTaskFallback] = useState<AsanaTask | null>(null)
+  const [asanaTasks, setAsanaTasks] = useState<AsanaTask[]>([])
+  const [asanaLoading, setAsanaLoading] = useState(false)
+  const [asanaError, setAsanaError] = useState<string | null>(null)
+  const [asanaSearchInput, setAsanaSearchInput] = useState('')
+  const [appliedAsanaSearch, setAppliedAsanaSearch] = useState('')
+  const [asanaRefreshNonce, setAsanaRefreshNonce] = useState(0)
+  const [selectedAsanaProjectGid, setSelectedAsanaProjectGid] = useState<string | null>(null)
+  const [asanaFilter, setAsanaFilter] = useState<AsanaTaskFilter>(DEFAULT_ASANA_TASK_FILTER)
+  const [asanaSections, setAsanaSections] = useState<AsanaSection[]>([])
+  const [asanaHasMoreTasks, setAsanaHasMoreTasks] = useState(false)
+
+  const selectedAsanaTask = selectedAsanaTaskGid
+    ? (asanaTasks.find((task) => task.gid === selectedAsanaTaskGid) ?? selectedAsanaTaskFallback)
+    : null
+  const setSelectedAsanaTask = useCallback((task: AsanaTask | null): void => {
+    setSelectedAsanaTaskGid(task?.gid ?? null)
+    setSelectedAsanaTaskFallback(task)
+  }, [])
+
+  useEffect(() => {
+    setSelectedAsanaTask(pageData.openAsanaTask ?? null)
+  }, [pageData.openAsanaTask, setSelectedAsanaTask])
+
+  const openAsanaDetailPage = useCallback(
+    (task: AsanaTask): void => {
+      openTaskPage(
+        {
+          taskSource: 'asana',
+          openAsanaTask: task,
+          openAsanaSourceContext: asanaTaskSourceContext
+        },
+        { recordTasksInteraction: false }
+      )
+    },
+    [asanaTaskSourceContext, openTaskPage]
+  )
+
+  const openComposerForAsanaTask = useCallback(
+    (task: AsanaTask): void => {
+      const linkedWorkItem: LinkedWorkItemSummary = {
+        provider: 'asana',
+        type: 'issue',
+        number: 0,
+        title: task.name,
+        url: task.permalinkUrl,
+        asanaIdentifier: task.gid,
+        ...(task.workspace?.gid ? { asanaWorkspaceGid: task.workspace.gid } : {})
+      }
+      const workspaceName = getLinkedWorkItemWorkspaceName(linkedWorkItem)
+      openModal('new-workspace-composer', {
+        linkedWorkItem,
+        taskSourceContext: asanaTaskSourceContext,
+        prefilledName: workspaceName?.seedName ?? getLinkedWorkItemSuggestedName(linkedWorkItem),
+        telemetrySource: 'sidebar'
+      })
+    },
+    [asanaTaskSourceContext, openModal]
+  )
+
+  const handleUseAsanaTask = useCallback(
+    (task: AsanaTask): void => {
+      openComposerForAsanaTask(task)
+    },
+    [openComposerForAsanaTask]
+  )
+
+  const asanaIncludeCompleted = asanaFilterNeedsCompletedTasks(asanaFilter)
+
+  useEffect(() => {
+    if (taskSource !== 'asana' || !asanaConnected || !asanaStatusReady) {
+      return
+    }
+    let cancelled = false
+    setAsanaLoading(true)
+    setAsanaError(null)
+    const source = asanaTaskSourceContext ?? settings
+    const includeCompleted = asanaIncludeCompleted
+    // Why: project reads carry their own sections, so search stays local there and only
+    // the assigned scope round-trips to Asana's workspace search.
+    const request: Promise<AsanaProjectTasks> = selectedAsanaProjectGid
+      ? asanaListProjectTasks(
+          source,
+          selectedAsanaProjectGid,
+          undefined,
+          includeCompleted,
+          selectedAsanaWorkspaceGid
+        )
+      : (appliedAsanaSearch.trim()
+          ? asanaSearchTasks(
+              source,
+              appliedAsanaSearch,
+              ASANA_ITEM_LIMIT,
+              selectedAsanaWorkspaceGid
+            )
+          : asanaListAssignedTasks(
+              source,
+              ASANA_ITEM_LIMIT,
+              selectedAsanaWorkspaceGid,
+              includeCompleted
+            )
+        ).then((tasks) => ({ sections: [], tasks, hasMore: false }))
+    void request
+      .then((result) => {
+        if (!cancelled) {
+          setAsanaTasks(result.tasks)
+          setAsanaSections(result.sections)
+          setAsanaHasMoreTasks(result.hasMore)
+          setAsanaLoading(false)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setAsanaTasks([])
+          setAsanaSections([])
+          setAsanaHasMoreTasks(false)
+          setAsanaError(error instanceof Error ? error.message : String(error))
+          setAsanaLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    appliedAsanaSearch,
+    asanaConnected,
+    asanaIncludeCompleted,
+    asanaRefreshNonce,
+    asanaStatusReady,
+    asanaTaskSourceContext,
+    selectedAsanaProjectGid,
+    selectedAsanaWorkspaceGid,
+    settings,
+    taskSource
+  ])
+
+  const asanaProjectOptions = useMemo(() => {
+    const projects = asanaStatus.projects ?? []
+    const scoped =
+      selectedAsanaWorkspaceGid && selectedAsanaWorkspaceGid !== 'all'
+        ? projects.filter((project) => project.workspaceGid === selectedAsanaWorkspaceGid)
+        : projects
+    return [...scoped].sort((left, right) => left.name.localeCompare(right.name))
+  }, [asanaStatus.projects, selectedAsanaWorkspaceGid])
+
+  const visibleAsanaTasks = useMemo(() => {
+    const filtered = filterAsanaTasks(asanaTasks, asanaFilter, {
+      viewerGid: asanaStatus.viewer?.gid ?? null
+    })
+    return selectedAsanaProjectGid ? searchAsanaTasksByText(filtered, asanaSearchInput) : filtered
+  }, [asanaFilter, asanaSearchInput, asanaStatus.viewer, asanaTasks, selectedAsanaProjectGid])
+
+  const asanaTaskGroups = useMemo(
+    () => groupAsanaTasksBySection(visibleAsanaTasks, selectedAsanaProjectGid ? asanaSections : []),
+    [asanaSections, selectedAsanaProjectGid, visibleAsanaTasks]
+  )
+
+  const handleSelectAsanaProject = useCallback((projectGid: string | null): void => {
+    setSelectedAsanaProjectGid(projectGid)
+    setAsanaTasks([])
+    setAsanaSections([])
+    setAsanaError(null)
+    setAppliedAsanaSearch('')
+    setAsanaSearchInput('')
+  }, [])
 
   // Linear tab state
   const [linearMode, setLinearMode] = useState<LinearMode>('issues')
@@ -5929,6 +6197,7 @@ export default function TaskPage(): React.JSX.Element {
 
   const [linearConnectOpen, setLinearConnectOpen] = useState(false)
   const [jiraConnectOpen, setJiraConnectOpen] = useState(false)
+  const [asanaConnectOpen, setAsanaConnectOpen] = useState(false)
   useContextualTour(
     'tasks',
     !dialogWorkItem &&
@@ -8807,6 +9076,7 @@ export default function TaskPage(): React.JSX.Element {
     hasGitHubDetail: Boolean(dialogWorkItem),
     hasGitLabDetail: Boolean(gitlabDialogItem),
     hasJiraDetail: Boolean(selectedJiraIssue),
+    hasAsanaDetail: Boolean(selectedAsanaTask),
     hasLinearIssueDetail: Boolean(selectedLinearIssue),
     hasLinearProjectContext: Boolean(selectedLinearProject),
     hasLinearViewContext: Boolean(selectedLinearCustomView)
@@ -8997,6 +9267,51 @@ export default function TaskPage(): React.JSX.Element {
                             ))}
                           </SelectContent>
                         </Select>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {taskSource === 'asana' && asanaConnected ? (
+                    <div className="flex items-center gap-2">
+                      {asanaWorkspaces.length > 1 ? (
+                        <Select
+                          value={selectedAsanaWorkspaceGid ?? undefined}
+                          onValueChange={(value) => {
+                            setSelectedAsanaTask(null)
+                            setAsanaTasks([])
+                            setAsanaError(null)
+                            handleSelectAsanaProject(null)
+                            void useAppStore
+                              .getState()
+                              .selectAsanaWorkspace(value)
+                              .then(() => setAsanaRefreshNonce((current) => current + 1))
+                              .catch(() => {
+                                toast.error(
+                                  translate(
+                                    'auto.components.TaskPage.asana.switchWorkspaceError',
+                                    'Failed to switch Asana workspace.'
+                                  )
+                                )
+                              })
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-[220px] rounded-md border-border/50 bg-muted/50 text-xs font-medium shadow-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {asanaWorkspaces.map((workspace) => (
+                              <SelectItem key={workspace.gid} value={workspace.gid}>
+                                {workspace.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : null}
+                      {asanaProjectViewSupported && asanaProjectOptions.length > 0 ? (
+                        <AsanaProjectPicker
+                          projects={asanaProjectOptions}
+                          selectedProjectGid={selectedAsanaProjectGid}
+                          onChange={handleSelectAsanaProject}
+                        />
                       ) : null}
                     </div>
                   ) : null}
@@ -9350,6 +9665,87 @@ export default function TaskPage(): React.JSX.Element {
                         </div>
                       )
                     })()}
+                  </div>
+                ) : taskSource === 'asana' && asanaConnected ? (
+                  <div
+                    className="min-w-0 rounded-md rounded-b-none border border-border/50 bg-muted/50 px-3 pt-2 pb-2 shadow-sm"
+                    data-contextual-tour-target="tasks-search-presets"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="relative min-w-0 flex-1">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={asanaSearchInput}
+                          onChange={(event) => setAsanaSearchInput(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key !== 'Enter' || selectedAsanaProjectGid) {
+                              return
+                            }
+                            event.preventDefault()
+                            setAppliedAsanaSearch(asanaSearchInput.trim())
+                          }}
+                          placeholder={
+                            selectedAsanaProjectGid
+                              ? translate(
+                                  'auto.components.TaskPage.asana.filterProjectPlaceholder',
+                                  'Filter tasks in this project...'
+                                )
+                              : translate(
+                                  'auto.components.TaskPage.asana.searchPlaceholder',
+                                  'Search Asana tasks...'
+                                )
+                          }
+                          className="h-8 rounded-md border-border/60 bg-background pl-8 pr-8 text-xs text-foreground shadow-xs"
+                        />
+                        {asanaSearchInput || appliedAsanaSearch ? (
+                          <button
+                            type="button"
+                            aria-label={translate(
+                              'auto.components.TaskPage.asana.clearSearch',
+                              'Clear search'
+                            )}
+                            onClick={() => {
+                              setAsanaSearchInput('')
+                              setAppliedAsanaSearch('')
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                          >
+                            <X className="size-4" />
+                          </button>
+                        ) : null}
+                      </div>
+                      {asanaProjectViewSupported ? (
+                        <AsanaTaskFilterMenu filter={asanaFilter} onChange={setAsanaFilter} />
+                      ) : null}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          setAsanaRefreshNonce((current) => current + 1)
+                          if (!asanaProjectViewSupported) {
+                            return
+                          }
+                          void useAppStore
+                            .getState()
+                            .refreshAsanaProjects(selectedAsanaWorkspaceGid)
+                            .catch(() => {
+                              // Why: a stale project list is recoverable; the task reload above still runs.
+                            })
+                        }}
+                        disabled={asanaLoading}
+                        aria-label={translate(
+                          'auto.components.TaskPage.asana.refresh',
+                          'Refresh Asana tasks'
+                        )}
+                        className="size-8 border-border/50 bg-transparent hover:bg-muted/50"
+                      >
+                        {asanaLoading ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="size-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ) : taskSource === 'linear' && linearConnected ? (
                   <div
@@ -10789,6 +11185,106 @@ export default function TaskPage(): React.JSX.Element {
                 </div>
               </div>
             </div>
+          ) : taskSource === 'asana' ? (
+            !asanaStatusReady ? (
+              <div className="mt-4 flex items-center justify-center py-14">
+                <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : !asanaConnected ? (
+              <div className="mt-4 flex flex-col items-center justify-center rounded-md border border-border/50 bg-muted/50 px-6 py-14 text-center shadow-sm">
+                <AsanaIcon className="mb-4 size-8 text-muted-foreground/60" />
+                <p className="text-base font-medium text-foreground">
+                  {translate(
+                    'auto.components.TaskPage.asana.connectTitle',
+                    'Connect your Asana account'
+                  )}
+                </p>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  {translate(
+                    'auto.components.TaskPage.asana.connectDescription',
+                    'Browse assigned tasks, search your workspaces, and start linked workspaces from Asana.'
+                  )}
+                </p>
+                <Button className="mt-5" onClick={() => setAsanaConnectOpen(true)}>
+                  {translate('auto.components.TaskPage.asana.addAccess', 'Add Asana access')}
+                </Button>
+              </div>
+            ) : selectedAsanaTask ? (
+              <AsanaTaskWorkspace
+                task={selectedAsanaTask}
+                onUse={handleUseAsanaTask}
+                onClose={closeTaskDetailPage}
+              />
+            ) : (
+              <div className="flex min-h-0 max-h-full flex-col overflow-hidden rounded-md rounded-t-none border border-t-0 border-border/50 bg-background shadow-sm">
+                <div className="flex h-10 flex-none items-center justify-between gap-3 border-b border-border/50 bg-muted/35 px-3">
+                  <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    <AsanaIcon className="size-3.5" />{' '}
+                    {translate('auto.components.TaskPage.asana.tasksTitle', 'Asana tasks')}
+                  </div>
+                  <div className="shrink-0 text-[11px] text-muted-foreground">
+                    {asanaHasMoreTasks
+                      ? translate(
+                          'auto.components.TaskPage.asana.shownCapped',
+                          'first {{value0}} shown',
+                          { value0: visibleAsanaTasks.length }
+                        )
+                      : translate('auto.components.TaskPage.asana.shown', '{{value0}} shown', {
+                          value0: visibleAsanaTasks.length
+                        })}
+                  </div>
+                </div>
+                {asanaError ? (
+                  <div className="border-b border-border px-4 py-4 text-sm text-destructive">
+                    {asanaError}
+                  </div>
+                ) : null}
+                {asanaLoading && visibleAsanaTasks.length === 0 ? (
+                  <div className="divide-y divide-border/50">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="px-3 py-3">
+                        <div className="h-4 w-4/5 animate-pulse rounded bg-muted/70" />
+                        <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-muted/60" />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {!asanaLoading && visibleAsanaTasks.length === 0 && !asanaError ? (
+                  <div className="px-4 py-12 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      {translate(
+                        'auto.components.TaskPage.asana.emptyTitle',
+                        'No Asana tasks found'
+                      )}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {appliedAsanaSearch || (selectedAsanaProjectGid && asanaSearchInput)
+                        ? translate(
+                            'auto.components.TaskPage.asana.emptySearch',
+                            'Try a different search.'
+                          )
+                        : selectedAsanaProjectGid
+                          ? translate(
+                              'auto.components.TaskPage.asana.emptyProject',
+                              'No tasks in this project match the current filters.'
+                            )
+                          : translate(
+                              'auto.components.TaskPage.asana.emptyAssigned',
+                              'No open tasks are assigned to you in this workspace.'
+                            )}
+                    </p>
+                  </div>
+                ) : null}
+                <div className="min-h-0 flex-1 overflow-y-auto scrollbar-sleek">
+                  <AsanaTaskList
+                    groups={asanaTaskGroups}
+                    selectedTask={selectedAsanaTask}
+                    onOpenTask={openAsanaDetailPage}
+                    onStartWorkspace={handleUseAsanaTask}
+                  />
+                </div>
+              </div>
+            )
           ) : taskSource === 'jira' ? (
             !jiraStatusReady ? (
               <div className="mt-4 flex items-center justify-center py-14">
@@ -13480,6 +13976,7 @@ export default function TaskPage(): React.JSX.Element {
       />
 
       <JiraConnectDialog open={jiraConnectOpen} onOpenChange={setJiraConnectOpen} />
+      <AsanaConnectDialog open={asanaConnectOpen} onOpenChange={setAsanaConnectOpen} />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import {
 } from './worktree-nav-history'
 import type {
   ChangelogData,
+  AsanaTask,
   CustomPet,
   GitHubWorkItem,
   JiraIssue,
@@ -687,6 +688,8 @@ export type UISlice = {
     openLinearSourceContext?: TaskSourceContext | null
     openJiraIssue?: JiraIssue
     openJiraSourceContext?: TaskSourceContext | null
+    openAsanaTask?: AsanaTask
+    openAsanaSourceContext?: TaskSourceContext | null
   }
   taskResumeState: TaskResumeState | undefined
   setTaskResumeState: (updates: Partial<TaskResumeState>) => void
@@ -704,7 +707,7 @@ export type UISlice = {
     note: string
     attachments: string[]
     linkedWorkItem: {
-      provider?: 'github' | 'gitlab' | 'linear' | 'jira'
+      provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'asana'
       type: 'issue' | 'pr' | 'mr'
       number: number
       title: string
@@ -712,6 +715,8 @@ export type UISlice = {
       linearIdentifier?: string
       linearBranchName?: string
       jiraIdentifier?: string
+      asanaIdentifier?: string
+      asanaWorkspaceGid?: string
       repoId?: string
     } | null
     /** Preserve where provider data came from, separately from the host chosen to run the workspace. */
@@ -1301,7 +1306,14 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
                 issue: data.openJiraIssue,
                 sourceContext: data.openJiraSourceContext
               } as const)
-            : null
+            : data.openAsanaTask
+              ? ({
+                  kind: 'task-detail',
+                  source: 'asana',
+                  task: data.openAsanaTask,
+                  sourceContext: data.openAsanaSourceContext
+                } as const)
+              : null
     const currentEntry = get().worktreeNavHistory[get().worktreeNavHistoryIndex]
     const currentIsTaskStack =
       currentEntry === 'tasks' ||

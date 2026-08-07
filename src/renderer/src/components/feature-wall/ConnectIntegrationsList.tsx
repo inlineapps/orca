@@ -7,6 +7,7 @@ import {
   GitLabIntegrationCard
 } from '@/components/settings/source-control-integration-cards'
 import {
+  AsanaIntegrationCard,
   JiraIntegrationCard,
   LinearIntegrationCard
 } from '@/components/settings/task-tracker-integration-cards'
@@ -53,7 +54,7 @@ function TaskSourceNameList(props: { names: readonly string[] }): React.JSX.Elem
 // status, then a task source. The order is a recommendation, not a gate — step
 // 2 starts collapsed but opens on click so tracker-first users aren't blocked.
 // Connecting step 1 collapses it to a summary and expands step 2, which stays
-// open until a dedicated tracker connects so Linear/Jira remain discoverable.
+// open until a dedicated tracker connects so task providers remain discoverable.
 // Done-state is driven by real provider connection status, never an
 // optimistic click.
 export function ConnectIntegrationsList(): React.JSX.Element {
@@ -90,7 +91,7 @@ export function ConnectIntegrationsList(): React.JSX.Element {
     taskToggle.whenReviewDone === reviewDone
   // Step 2 defaults collapsed while step 1 is still active (but opens on
   // click — review is not a prerequisite for connecting a tracker), stays open
-  // even when the code host already resolved it so Linear/Jira remain
+  // even when the code host already resolved it so task providers remain
   // discoverable, and collapses only once a dedicated tracker connects.
   const taskExpanded = taskToggleCurrent ? taskToggle.expanded : reviewDone && !trackerDone
 
@@ -158,7 +159,7 @@ export function ConnectIntegrationsList(): React.JSX.Element {
                 </span>{' '}
                 {translate(
                   'auto.components.feature.wall.ConnectIntegrationsList.code_host_tasks_summary',
-                  'issues available as tasks · add Linear or Jira if your team plans work there'
+                  'issues available as tasks · add Linear, Jira, or Asana if your team plans work there'
                 )}
               </>
             )
@@ -174,6 +175,7 @@ export function ConnectIntegrationsList(): React.JSX.Element {
           <IntegrationCardGroup>
             <LinearIntegrationCard />
             <JiraIntegrationCard />
+            <AsanaIntegrationCard />
           </IntegrationCardGroup>
           <p className="px-1 pt-0.5 text-[12px] leading-snug text-muted-foreground">
             {translate(
