@@ -2420,7 +2420,9 @@ export type PreloadApi = {
       limit?: number
       includeCompleted?: boolean
       workspaceGid?: string
+      sectionGid?: string
     }) => Promise<AsanaProjectTasks>
+    listSubtasks: (args: { gid: string; workspaceGid?: string }) => Promise<AsanaTask[]>
     searchTasks: (args: {
       query: string
       limit?: number
