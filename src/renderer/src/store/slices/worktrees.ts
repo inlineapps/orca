@@ -17,6 +17,11 @@ import type {
   WorktreeMeta
 } from '../../../../shared/types'
 import type { RuntimeWorktreeListResult } from '../../../../shared/runtime-types'
+import type {
+  WorktreeRetryAgentLaunchResult,
+  ForgetUnknownAgentLaunchResult
+} from '../../../../shared/agent-launch-worktree-recovery'
+import type { PendingAgentLaunchSummary } from '../../../../shared/agent-launch-pending-summary'
 import {
   findWorktreeById,
   applyWorktreeUpdates,
@@ -39,6 +44,7 @@ import {
   dropWorktreeRowsForRemovedRuntimeEnvironments,
   isRemovedRuntimeHostId
 } from './stale-runtime-host-rows'
+import { recordRendererCrashBreadcrumb } from '@/lib/crash-breadcrumb-recorder'
 import { ensureHooksConfirmed } from '@/lib/ensure-hooks-confirmed'
 import { cleanupEphemeralVmRuntimesForDeleted } from '@/lib/ephemeral-vm-runtime-cleanup'
 import { tabHasLivePty } from '@/lib/tab-has-live-pty'
@@ -49,7 +55,8 @@ import {
   getActiveRuntimeTarget,
   hasRuntimeRpcErrorCode,
   isRuntimeScopeForbiddenError,
-  RuntimeRpcCallError
+  RuntimeRpcCallError,
+  type RuntimeClientTarget
 } from '../../runtime/runtime-rpc-client'
 import {
   ASANA_TASK_PROVIDER_RUNTIME_CAPABILITY,
@@ -231,6 +238,23 @@ async function mapReposForWorktreeRefresh<TRepo extends { id: string }, TResult>
   return results
 }
 
+// Why: the deferring state persists across refresh cycles; dedupe by signature so the trace log gets the timeline transition, not one crumb per fetchAllWorktrees.
+let lastHydrationPurgeDeferralSignature: string | null = null
+function recordHydrationPurgeDeferralBreadcrumb(data: {
+  deferredUnknownOwner: number
+  deferredUncoveredHost: number
+  removed: number
+  repoCount: number
+  localRepoCount: number
+  coveredHosts: string
+}): void {
+  const signature = JSON.stringify(data)
+  if (signature === lastHydrationPurgeDeferralSignature) {
+    return
+  }
+  lastHydrationPurgeDeferralSignature = signature
+  recordRendererCrashBreadcrumb('worktree_purge.hydration_deferred', data)
+}
 function shouldDeferActivationTerminalPrep(): boolean {
   return typeof window !== 'undefined' && import.meta.env.MODE !== 'test'
 }
@@ -3701,13 +3725,72 @@ export const createWorktreeSlice: StateCreator<AppState, [], [], WorktreeSlice> 
         validIds.add(w.id)
       }
     }
-    const stale = Object.keys(get().tabsByWorktree).filter((id) => !validIds.has(id))
+    // Why (incident 2026-07-19): a remote-only repo hydration passed every gate and condemned all 15 local owners. An owner repo missing from hydrated repos, or a host with zero authoritative non-empty detections, means hydration is incomplete — not deletion — so those keys are deferred, never condemned.
+    const repoHostById = new Map<string, ExecutionHostId>(
+      get().repos.map((r) => [r.id, getRepoExecutionHostId(r)])
+    )
+    const coveredHostIds = new Set<ExecutionHostId>()
+    for (const repo of get().repos) {
+      const detected = get().detectedWorktreesByRepo[repo.id]
+      if (detected?.authoritative && detected.worktrees.length > 0) {
+        coveredHostIds.add(getRepoExecutionHostId(repo))
+      }
+    }
+    const deferredUnknownOwner: string[] = []
+    const deferredUncoveredHost: string[] = []
+    const stale: string[] = []
+    let staleLocalOwners = 0
+    for (const id of Object.keys(get().tabsByWorktree)) {
+      if (validIds.has(id)) {
+        continue
+      }
+      const ownerHostId = repoHostById.get(getRepoIdFromWorktreeId(id))
+      if (ownerHostId === undefined) {
+        deferredUnknownOwner.push(id)
+      } else if (!coveredHostIds.has(ownerHostId)) {
+        deferredUncoveredHost.push(id)
+      } else {
+        if (ownerHostId === LOCAL_EXECUTION_HOST_ID) {
+          staleLocalOwners += 1
+        }
+        stale.push(id)
+      }
+    }
+    const localRepoCount = [...repoHostById.values()].filter(
+      (hostId) => hostId === LOCAL_EXECUTION_HOST_ID
+    ).length
     if (stale.length > 0) {
       console.warn(
         `[worktree-purge] hydration-time purge removing stale state for ${stale.length} worktree(s):`,
         stale
       )
+      recordRendererCrashBreadcrumb('worktree_purge.hydration', {
+        removed: stale.length,
+        removedLocalOwners: staleLocalOwners,
+        removedRemoteOwners: stale.length - staleLocalOwners,
+        deferredUnknownOwner: deferredUnknownOwner.length,
+        deferredUncoveredHost: deferredUncoveredHost.length,
+        repoCount: repoHostById.size,
+        localRepoCount,
+        coveredHosts: [...coveredHostIds].join(',')
+      })
       get().purgeWorktreeTerminalState(stale)
+    }
+    if (deferredUnknownOwner.length > 0 || deferredUncoveredHost.length > 0) {
+      console.warn(
+        `[worktree-purge] deferring hydration purge for ${deferredUnknownOwner.length} unknown-owner and ${deferredUncoveredHost.length} uncovered-host worktree(s); repo hydration looks incomplete`
+      )
+      recordHydrationPurgeDeferralBreadcrumb({
+        deferredUnknownOwner: deferredUnknownOwner.length,
+        deferredUncoveredHost: deferredUncoveredHost.length,
+        removed: stale.length,
+        repoCount: repoHostById.size,
+        // Why: localRepoCount 0 with unknown-owner deferrals is the silent upstream anomaly — persistence holds local owners while hydration produced no local repos.
+        localRepoCount,
+        coveredHosts: [...coveredHostIds].join(',')
+      })
+      // Why: leave the one-shot unconsumed so a later, fully hydrated cycle can still reap genuinely stale keys.
+      return
     }
     set({ hasHydratedWorktreePurge: true })
   },
@@ -4002,6 +4085,8 @@ export const createWorktreeSlice: StateCreator<AppState, [], [], WorktreeSlice> 
     const automationProvenanceRequest = options?.automationProvenanceRequest
     const linkedWorkItem = options?.linkedWorkItem
     const linkedTaskSourceContext = options?.linkedTaskSourceContext
+    const agentLaunch = options?.agentLaunch
+    const agentLaunchTelemetry = options?.agentLaunchTelemetry
     try {
       for (let attempt = 0; attempt < CLIENT_WORKTREE_CREATE_MAX_ATTEMPTS; attempt += 1) {
         const candidateName = getClientWorktreeCreateCandidate(name, attempt)
@@ -4053,7 +4138,9 @@ export const createWorktreeSlice: StateCreator<AppState, [], [], WorktreeSlice> 
             ...(linkedTaskSourceContext !== undefined ? { linkedTaskSourceContext } : {}),
             ...(startup ? { startup } : {}),
             ...(creationId ? { creationId } : {}),
-            ...(automationProvenanceRequest ? { automationProvenanceRequest } : {})
+            ...(automationProvenanceRequest ? { automationProvenanceRequest } : {}),
+            ...(agentLaunch ? { agentLaunch } : {}),
+            ...(agentLaunchTelemetry ? { agentLaunchTelemetry } : {})
           }
           const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
           if (
@@ -4131,11 +4218,23 @@ export const createWorktreeSlice: StateCreator<AppState, [], [], WorktreeSlice> 
                             : {}),
                           activate: true
                         }
-                      : {})
+                      : {}),
+                    ...(agentLaunch ? { agentLaunch } : {}),
+                    ...(agentLaunchTelemetry ? { agentLaunchTelemetry } : {})
                   },
                   { timeoutMs: 10 * 60_000 }
                 )
-          // Why: worktrees.onChanged can add this worktree before this callback runs; appending blindly would duplicate it (React key clash).
+          // A pre-create agent-launch rejection created no worktree, so there is
+          // nothing to insert — hand the union back so the initiating composer can
+          // stay open with its draft and the client-safe recovery hints.
+          if (result.created === false) {
+            return result
+          }
+          // Why: a file watcher (worktrees.onChanged) can fire between the
+          // backend creating the worktree and this callback running, causing
+          // fetchWorktrees to add the worktree first. Appending unconditionally
+          // then produces a duplicate entry in worktreesByRepo, which gives
+          // React duplicate keys and can corrupt terminal DOM containers.
           set((s) => {
             const hostId = repoHostId(s, repoId)
             const createdWorktree = withRepoHostOwnership(
@@ -4202,6 +4301,147 @@ export const createWorktreeSlice: StateCreator<AppState, [], [], WorktreeSlice> 
       console.error('Failed to create worktree:', err)
       throw err
     }
+  },
+
+  retryWorktreeAgentLaunch: async ({ worktreeId, expectedFailureId, action }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    // A fresh canonical-lowercase-UUID per click; crypto.randomUUID() already
+    // emits that form, which the host idempotency schema requires.
+    const clientMutationId = globalThis.crypto.randomUUID()
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    // launched/failed reconcile into WorktreeMeta via the host's worktrees:changed
+    // notification; the card just needs the tri-state result to render blocked/
+    // rejected reasons, so no local set() here.
+    if (target.kind === 'local') {
+      return window.api.worktrees.retryAgentLaunch({
+        worktreeId,
+        expectedFailureId,
+        clientMutationId,
+        action
+      })
+    }
+    return callRuntimeRpc<WorktreeRetryAgentLaunchResult>(
+      target,
+      'worktree.retryAgentLaunch',
+      {
+        worktree: toRuntimeWorktreeSelector(worktreeId),
+        expectedFailureId,
+        clientMutationId,
+        action
+      },
+      { timeoutMs: 10 * 60_000 }
+    )
+  },
+
+  forgetWorktreeAgentLaunch: async ({ worktreeId, expectedOperationId }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    const clientMutationId = globalThis.crypto.randomUUID()
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    if (target.kind === 'local') {
+      return window.api.worktrees.forgetAgentLaunch({
+        worktreeId,
+        expectedOperationId,
+        clientMutationId
+      })
+    }
+    return callRuntimeRpc<ForgetUnknownAgentLaunchResult>(
+      target,
+      'worktree.forgetAgentLaunch',
+      {
+        worktree: toRuntimeWorktreeSelector(worktreeId),
+        expectedOperationId,
+        clientMutationId
+      },
+      { timeoutMs: 30_000 }
+    )
+  },
+
+  retryBackgroundAgentLaunch: async ({ attemptId, worktreeId, expectedFailureId, action }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    const clientMutationId = globalThis.crypto.randomUUID()
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    if (target.kind === 'local') {
+      return window.api.worktrees.retryBackgroundAgentLaunch({
+        attemptId,
+        expectedFailureId,
+        clientMutationId,
+        action
+      })
+    }
+    return callRuntimeRpc<WorktreeRetryAgentLaunchResult>(
+      target,
+      'worktree.retryBackgroundAgentLaunch',
+      { attemptId, expectedFailureId, clientMutationId, action },
+      { timeoutMs: 10 * 60_000 }
+    )
+  },
+
+  forgetBackgroundAgentLaunch: async ({ attemptId, worktreeId, expectedOperationId }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    const clientMutationId = globalThis.crypto.randomUUID()
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    if (target.kind === 'local') {
+      return window.api.worktrees.forgetBackgroundAgentLaunch({
+        attemptId,
+        expectedOperationId,
+        clientMutationId
+      })
+    }
+    return callRuntimeRpc<ForgetUnknownAgentLaunchResult>(
+      target,
+      'worktree.forgetBackgroundAgentLaunch',
+      { attemptId, expectedOperationId, clientMutationId },
+      { timeoutMs: 30_000 }
+    )
+  },
+
+  unknownAgentLaunchSiblingPreflight: async ({ worktreeId }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    // A local anchor never has bulk-eligible siblings (:498 only clears a
+    // disconnected remote provider), so the host returns 0 and the opt-in stays
+    // hidden; the host name is moot there.
+    if (target.kind === 'local') {
+      const { count } = await window.api.worktrees.unknownAgentLaunchSiblingCount({ worktreeId })
+      return { count, hostName: '' }
+    }
+    const { count } = await callRuntimeRpc<{ count: number }>(
+      target,
+      'worktree.unknownAgentLaunchSiblingCount',
+      { worktree: toRuntimeWorktreeSelector(worktreeId) },
+      { timeoutMs: 30_000 }
+    )
+    const environment = get().runtimeEnvironments.find((entry) => entry.id === target.environmentId)
+    return { count, hostName: environment?.name || target.environmentId }
+  },
+
+  forgetUnknownAgentLaunchSiblings: async ({ worktreeId }) => {
+    const repoId = getRepoIdFromWorktreeId(worktreeId)
+    const target = getActiveRuntimeTarget(settingsForRepoOwner(get(), repoId))
+    if (target.kind === 'local') {
+      return window.api.worktrees.forgetUnknownAgentLaunchSiblings({ worktreeId })
+    }
+    return callRuntimeRpc<{ forgottenCount: number }>(
+      target,
+      'worktree.forgetUnknownAgentLaunchSiblings',
+      { worktree: toRuntimeWorktreeSelector(worktreeId) },
+      { timeoutMs: 30_000 }
+    )
+  },
+
+  fetchPendingAgentLaunchSummary: async (target?: RuntimeClientTarget) => {
+    // The summary is principal-scoped host-side, so it takes the rejection's
+    // runtime target rather than a worktree id; local (or omitted) hits the local
+    // IPC mirror, which in the paired-web bundle already routes over RPC.
+    if (!target || target.kind === 'local') {
+      return window.api.worktrees.pendingAgentLaunchSummary()
+    }
+    return callRuntimeRpc<PendingAgentLaunchSummary>(
+      target,
+      'worktree.pendingAgentLaunchSummary',
+      {},
+      { timeoutMs: 30_000 }
+    )
   },
 
   beginPendingWorktreeCreation: (entry) => {

@@ -49,6 +49,8 @@ import { useAutomationDispatchEvents } from './hooks/useAutomationDispatchEvents
 import RetainedAgentsSyncGate from './components/dashboard/RetainedAgentsSyncGate'
 import { AgentHibernationGate } from './components/AgentHibernationGate'
 import { AiVaultTabTitleSyncGate } from './components/AiVaultTabTitleSyncGate'
+import { DataRecoveryMigrationNotice } from './components/data-recovery/DataRecoveryMigrationNotice'
+import { DataRecoveryPinExitNotice } from './components/data-recovery/DataRecoveryPinExitNotice'
 import { ActivityTitlebarControls } from './components/activity/ActivityTitlebarControls'
 import Sidebar from './components/Sidebar'
 import { shutdownBufferCaptures } from './components/terminal-pane/shutdown-buffer-captures'
@@ -349,6 +351,9 @@ const StatusBar = lazy(() =>
 const SetupGuideModal = lazy(() => import('./components/setup-guide/SetupGuideModal'))
 const FeatureWallModal = lazy(() => import('./components/feature-wall/FeatureWallModal'))
 const FeatureTipsModal = lazy(() => import('./components/feature-tips/FeatureTipsModal'))
+const AgentLaunchCapacityRecoverySheet = lazy(
+  () => import('./components/agent/AgentLaunchCapacityRecoverySheet')
+)
 const AddRepoDialog = lazy(() => import('./components/sidebar/AddRepoDialog'))
 const NonGitFolderDialog = lazy(() => import('./components/sidebar/NonGitFolderDialog'))
 const AddProjectFromFolderDialog = lazy(
@@ -2255,6 +2260,9 @@ function App(): React.JSX.Element {
               </Suspense>
             ) : null}
             <AgentHibernationGate />
+            {/* Why: a blocked data migration must be visible without opening Settings (runbook release requirement). */}
+            <DataRecoveryMigrationNotice />
+            <DataRecoveryPinExitNotice />
             {/* Why: workspace activation is a hot path; activeWorktreeId in reset keys would remount whole surfaces during wake. */}
             <RecoverableRenderErrorBoundary
               boundaryId="app.workspace-shell"
@@ -2616,6 +2624,16 @@ function App(): React.JSX.Element {
                   compact
                 >
                   <FeatureTipsModal />
+                </RecoverableRenderErrorBoundary>
+              ) : null}
+              {resolvedMountedLazyModalIds.has('agent-launch-capacity-recovery') ? (
+                <RecoverableRenderErrorBoundary
+                  boundaryId="modal.agent-launch-capacity-recovery"
+                  surface="modal"
+                  resetKey={activeModal === 'agent-launch-capacity-recovery'}
+                  compact
+                >
+                  <AgentLaunchCapacityRecoverySheet />
                 </RecoverableRenderErrorBoundary>
               ) : null}
             </Suspense>
