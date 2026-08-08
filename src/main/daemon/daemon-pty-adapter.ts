@@ -518,6 +518,7 @@ export class DaemonPtyAdapter implements IPtyProvider {
         startupCommandDelivery: attachOnly ? undefined : opts.startupCommandDelivery,
         launchAgent: attachOnly ? undefined : opts.launchAgent,
         ...(attachOnly && !emulateLegacyAttachOnly ? { attachOnly: true } : {}),
+        ...(!attachOnly && opts.launchToken ? { launchToken: opts.launchToken } : {}),
         // Why: without forwarding the override, the daemon falls back to cmd.exe/PowerShell, ignoring the shell the renderer chose; this matches LocalPtyProvider.
         shellOverride: attachOnly ? undefined : opts.shellOverride,
         terminalWindowsWslDistro: attachOnly ? undefined : opts.terminalWindowsWslDistro,
@@ -1436,7 +1437,8 @@ export class DaemonPtyAdapter implements IPtyProvider {
             ...(worktreeId ? { worktreeId } : {}),
             ...(session.terminalHandle ? { terminalHandle: session.terminalHandle } : {}),
             ...(session.wslDistro !== undefined ? { wslDistro: session.wslDistro } : {}),
-            ...this.validatedAgentSessionOwners(session.agentSessionOwners)
+            ...this.validatedAgentSessionOwners(session.agentSessionOwners),
+            ...(session.launchToken ? { launchToken: session.launchToken } : {})
           })
         )
       }
