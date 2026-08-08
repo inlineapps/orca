@@ -225,6 +225,9 @@ export const electronViteConfig: UserConfig = {
           'browser-window-close-preload': resolve('src/preload/browser-window-close.ts'),
           'doc-preview-link-preload': resolve('src/preload/doc-preview-link.ts'),
           'daemon-entry': resolve('src/main/daemon/daemon-entry.ts'),
+          // Why: tsconfig.cli emits a CLI test that requires this module, but the
+          // electron-vite clean wipes out/main — keep it emitted so the require resolves.
+          'startup/serve-mode-argv': resolve('src/main/startup/serve-mode-argv.ts'),
           'plugin-host-entry': resolve('src/main/plugins/plugin-host-entry.ts'),
           'computer-sidecar': resolve('src/main/computer/sidecar-entry.ts'),
           'stt-worker': resolve('src/main/speech/stt-worker.ts'),
