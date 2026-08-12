@@ -20,6 +20,11 @@ const apiMocks = vi.hoisted(() => ({
   sshConnect: vi.fn()
 }))
 
+const mocks = vi.hoisted(() => ({
+  disabledTuiAgents: [] as string[],
+  capturedAgents: [] as { id: string; label: string; baseAgent?: string }[]
+}))
+
 vi.mock('@/store', () => ({
   useAppStore: Object.assign(
     (selector: (state: unknown) => unknown) =>
@@ -30,7 +35,7 @@ vi.mock('@/store', () => ({
         openSettingsTarget: storeMocks.openSettingsTarget,
         setRuntimeEnvironmentStatus: storeMocks.setRuntimeEnvironmentStatus,
         activeModal: 'none',
-        settings: { defaultTuiAgent: null, disabledTuiAgents: [] },
+        settings: { defaultTuiAgent: null, disabledTuiAgents: mocks.disabledTuiAgents },
         updateSettings: vi.fn()
       }),
     {
@@ -52,7 +57,10 @@ vi.mock('@/components/ui/tooltip', () => ({
 }))
 
 vi.mock('@/components/agent/AgentCombobox', () => ({
-  default: () => <button type="button">Agent picker</button>
+  default: ({ agents }: { agents: { id: string; label: string; baseAgent?: string }[] }) => {
+    mocks.capturedAgents = agents
+    return <button type="button">Agent picker</button>
+  }
 }))
 
 // Stub the host-add dialog to its `mode` — the composer's job is to open it with the right
@@ -200,6 +208,7 @@ function renderCard(
       <NewWorkspaceComposerCard
         quickAgent={null}
         onQuickAgentChange={() => {}}
+        quickAgentOptions={[]}
         eligibleRepos={[]}
         repoId="repo-a"
         projectOptions={projectOptions}
@@ -222,7 +231,6 @@ function renderCard(
         branchNameOverride=""
         onBranchNameOverrideChange={() => {}}
         forkPushWarning={null}
-        detectedAgentIds={null}
         onOpenAgentSettings={() => {}}
         advancedOpen={false}
         onToggleAdvanced={() => {}}
@@ -296,6 +304,36 @@ function findRunTargetItem(label: string): HTMLElement | undefined {
 }
 
 let current: { container: HTMLDivElement; root: Root } | null = null
+
+describe('NewWorkspaceComposerCard custom agents', () => {
+  afterEach(() => {
+    act(() => current?.root.unmount())
+    current?.container.remove()
+    current = null
+    mocks.disabledTuiAgents = []
+    mocks.capturedAgents = []
+  })
+
+  it('passes a custom option to the picker without changing its identity', () => {
+    current = renderCard({
+      quickAgentOptions: [
+        {
+          id: 'custom-agent:codex:aa',
+          label: 'My Codex',
+          cmd: '/opt/agent',
+          homepageUrl: 'https://example.com',
+          baseAgent: 'codex'
+        }
+      ] as never
+    })
+    const custom = mocks.capturedAgents.find((entry) => entry.id === 'custom-agent:codex:aa')
+    expect(custom).toMatchObject({ label: 'My Codex', baseAgent: 'codex' })
+    // The displayed label is the human label, never the raw custom-agent id.
+    for (const entry of mocks.capturedAgents) {
+      expect(entry.label.startsWith('custom-agent:')).toBe(false)
+    }
+  })
+})
 
 describe('NewWorkspaceComposerCard folder task source mode', () => {
   beforeEach(() => {

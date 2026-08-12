@@ -9,6 +9,7 @@ import { searchTerminalQuickCommands } from '@/lib/terminal-quick-command-search
 import { useAppStore } from '../../store'
 import { Button } from '../ui/button'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
+import { deleteTerminalQuickCommand, saveTerminalQuickCommand } from '@/lib/agent-catalog-authoring'
 import { getSettingOwnershipSummary } from './setting-ownership'
 import { translate } from '@/i18n/i18n'
 import { QuickCommandsList } from './QuickCommandsList'
@@ -251,7 +252,11 @@ export function QuickCommandsPane({
       return
     }
     useAppStore.getState().recordFeatureInteraction('quick-commands')
-    void useAppStore.getState().upsertTerminalQuickCommand(editor.hostId, next)
+    if (editor.hostId.startsWith('runtime:')) {
+      void useAppStore.getState().upsertTerminalQuickCommand(editor.hostId, next)
+      return
+    }
+    void saveTerminalQuickCommand(next)
   }
 
   const removeCommand = async (command: TerminalQuickCommand): Promise<void> => {
@@ -271,7 +276,11 @@ export function QuickCommandsPane({
     if (!confirmed) {
       return
     }
-    void useAppStore.getState().deleteTerminalQuickCommand(selectedHostId, command.id)
+    if (selectedHostId.startsWith('runtime:')) {
+      void useAppStore.getState().deleteTerminalQuickCommand(selectedHostId, command.id)
+      return
+    }
+    void deleteTerminalQuickCommand(command.id)
   }
 
   const openAddDialog = (): void =>
