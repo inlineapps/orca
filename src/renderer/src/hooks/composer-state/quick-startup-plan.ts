@@ -5,16 +5,15 @@ import type { AgentStartedTelemetry } from '@/lib/worktree-startup-payload'
 import type { WorktreeCreationRequest } from '@/lib/pending-worktree-creation'
 import type { AgentStartupPlan } from '@/lib/tui-agent-startup'
 import { buildAgentDraftLaunchPlan, buildAgentStartupPlan } from '@/lib/tui-agent-startup'
-import {
-  resolveTuiAgentLaunchArgs,
-  resolveTuiAgentLaunchEnv
-} from '../../../../shared/tui-agent-launch-defaults'
+import { resolveTuiAgentLaunchArgsForModel } from '../../../../shared/agent-launch-model-variant'
+import { resolveTuiAgentLaunchEnv } from '../../../../shared/tui-agent-launch-defaults'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import { isNativeChatTranscriptLocalReadable } from '@/lib/native-chat-transcript-readability'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 
 export type QuickComposerStartupInput = {
   agent: TuiAgent | null
+  modelId?: string | null
   prompt: string
   draftPrompt: string | null | undefined
   settings: GlobalSettings | null | undefined
@@ -59,7 +58,11 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           agent,
           draft: draftPrompt,
           cmdOverrides: settings?.agentCmdOverrides ?? {},
-          agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
+          agentArgs: resolveTuiAgentLaunchArgsForModel({
+            agent,
+            modelId: input.modelId,
+            configuredArgs: settings?.agentDefaultArgs
+          }),
           agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
           sessionOptions,
           platform: input.platform,
@@ -85,7 +88,11 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
       agent,
       prompt,
       cmdOverrides: settings?.agentCmdOverrides ?? {},
-      agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
+      agentArgs: resolveTuiAgentLaunchArgsForModel({
+        agent,
+        modelId: input.modelId,
+        configuredArgs: settings?.agentDefaultArgs
+      }),
       agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
       sessionOptions,
       platform: input.platform,

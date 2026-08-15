@@ -221,6 +221,8 @@ function renderCard(
       <NewWorkspaceComposerCard
         quickAgent={null}
         onQuickAgentChange={() => {}}
+        quickAgentModelId={null}
+        onQuickAgentModelChange={() => {}}
         eligibleRepos={[]}
         repoId="repo-a"
         projectOptions={projectOptions}
