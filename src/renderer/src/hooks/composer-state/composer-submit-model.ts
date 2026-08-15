@@ -85,7 +85,7 @@ export type ComposerSubmitModel = {
   executeQuickCreation: (
     resolution: PendingSmartGitHubSubmitResolution,
     requestedAgent: TuiAgent | null,
-    requestedModelId: string | null | undefined,
+    requestedPresetId: string | null | undefined,
     workspaceNameSeed: string,
     workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
     repoId: string,
@@ -109,9 +109,9 @@ export type ComposerSubmitModel = {
   ) => QuickSubmitSource | null
   resetForNextCreate: () => void
   submit: () => Promise<void>
-  submitQuick: (agent: TuiAgent | null, modelId?: string | null) => Promise<void>
+  submitQuick: (agent: TuiAgent | null, presetId?: string | null) => Promise<void>
   submitFolderTarget: (
     requestedAgent: TuiAgent | null,
-    requestedModelId?: string | null
+    requestedPresetId?: string | null
   ) => Promise<void>
 }
