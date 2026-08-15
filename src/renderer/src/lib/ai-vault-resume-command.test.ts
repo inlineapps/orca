@@ -669,4 +669,47 @@ describe('ai vault resume command runtime', () => {
       })
     ).toBe("codex 'resume' 'session one'")
   })
+
+  it('resumes on a picked model instead of the agent default args', () => {
+    const state = makeState({ worktreePath: '/home/alice/repo' })
+    state.settings = {
+      ...state.settings,
+      agentDefaultArgs: { claude: '--model sonnet --verbose' }
+    } as never
+
+    expect(
+      buildQueuedAiVaultResumeCommand({
+        state,
+        worktreeId: 'repo-1::worktree-1',
+        session: {
+          agent: 'claude',
+          sessionId: 'session seven',
+          cwd: '/home/alice/repo',
+          codexHome: null
+        },
+        modelId: 'fable'
+      })
+    ).toBe("claude '--verbose' '--model' 'fable' '--resume' 'session seven'")
+  })
+
+  it('rebuilds rather than reusing a remote prebuilt resume command when a model is picked', () => {
+    const state = makeState({ worktreePath: '/home/alice/repo' })
+
+    expect(
+      buildQueuedAiVaultResumeCommand({
+        state,
+        worktreeId: 'repo-1::worktree-1',
+        session: {
+          agent: 'claude',
+          sessionId: 'session seven',
+          cwd: '/home/alice/repo',
+          codexHome: null,
+          executionHostId: 'ssh:linux-box',
+          executionHostPlatform: 'linux',
+          resumeCommand: "claude --resume 'session seven'"
+        },
+        modelId: 'opus'
+      })
+    ).toBe("claude '--model' 'opus' '--resume' 'session seven'")
+  })
 })

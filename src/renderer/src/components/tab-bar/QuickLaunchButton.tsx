@@ -1,13 +1,23 @@
 import React, { useCallback } from 'react'
 import { Settings as SettingsIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { DropdownMenuItem, DropdownMenuShortcut } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger
+} from '@/components/ui/dropdown-menu'
 import { getAgentCatalog, AgentIcon } from '@/lib/agent-catalog'
 import { useAppStore } from '@/store'
 import { useAgentDetectionTargetForWorktree } from '@/hooks/useAgentDetectionTarget'
 import { useDetectedAgents } from '@/hooks/useDetectedAgents'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
+import {
+  getAgentLaunchModelVariants,
+  resolveTuiAgentLaunchArgsForModel
+} from '../../../../shared/agent-launch-model-variant'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
 import {
@@ -123,13 +133,22 @@ function QuickLaunchAgentMenuItemsInner({
   }, [openSettingsPage, openSettingsTarget])
 
   const runLaunch = useCallback(
-    (agent: TuiAgent) => {
+    (agent: TuiAgent, modelId?: string) => {
       const entry = getCatalogEntry(agent)
       const label = entry?.label ?? agent
       const result = launchAgentInNewTab({
         agent,
         worktreeId,
         groupId,
+        ...(modelId
+          ? {
+              agentArgs: resolveTuiAgentLaunchArgsForModel({
+                agent,
+                modelId,
+                configuredArgs: useAppStore.getState().settings?.agentDefaultArgs
+              })
+            }
+          : {}),
         ...(prompt !== undefined ? { prompt } : {}),
         ...(promptDelivery !== undefined ? { promptDelivery } : {}),
         ...(launchSource !== undefined ? { launchSource } : {}),
@@ -199,6 +218,51 @@ function QuickLaunchAgentMenuItemsInner({
         const label = entry?.label ?? agent
         const showsDefaultAgentShortcut =
           newAgentShortcut !== null && defaultAgent !== 'blank' && agent === defaultAgent
+        const modelVariants = getAgentLaunchModelVariants(agent)
+        if (modelVariants.length > 0) {
+          return (
+            <DropdownMenuSub key={agent}>
+              {/* Why: the trigger keeps the plain agent row's label, title, and shortcut so
+                  the model list reads as an extra step, not a replacement for it. */}
+              <DropdownMenuSubTrigger
+                className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
+                title={translate(
+                  'auto.components.tab.bar.QuickLaunchButton.ec2adf093e',
+                  'Launch {{value0}} in a new terminal',
+                  { value0: label }
+                )}
+              >
+                <AgentIcon agent={agent} size={14} />
+                <span className="flex-1">{label}</span>
+                {showsDefaultAgentShortcut ? (
+                  <DropdownMenuShortcut>{newAgentShortcut}</DropdownMenuShortcut>
+                ) : null}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onSelect={() => runLaunch(agent)}
+                  className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
+                >
+                  {translate('components.tabBar.quickLaunch.defaultModel', 'Default model')}
+                </DropdownMenuItem>
+                {modelVariants.map((variant) => (
+                  <DropdownMenuItem
+                    key={variant.modelId}
+                    onSelect={() => runLaunch(agent, variant.modelId)}
+                    className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
+                    title={translate(
+                      'components.tabBar.quickLaunch.launchAgentWithModel',
+                      'Launch {{value0}} on {{value1}} in a new terminal',
+                      { value0: label, value1: variant.label }
+                    )}
+                  >
+                    {variant.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )
+        }
         return (
           <DropdownMenuItem
             key={agent}

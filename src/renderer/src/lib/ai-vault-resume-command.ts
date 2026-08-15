@@ -10,10 +10,8 @@ import {
   type SleepingAgentLaunchConfig
 } from '../../../shared/agent-session-resume'
 import { normalizeAiVaultResumeFilePath } from '../../../shared/ai-vault-resume-path'
-import {
-  resolveTuiAgentLaunchArgs,
-  resolveTuiAgentLaunchEnv
-} from '../../../shared/tui-agent-launch-defaults'
+import { resolveTuiAgentLaunchEnv } from '../../../shared/tui-agent-launch-defaults'
+import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
 import { parseWslUncPath } from '../../../shared/wsl-paths'
 import type { AgentStartupShell } from '../../../shared/tui-agent-startup-shell'
 import { clearEnvCommand, commandSeparator } from '../../../shared/tui-agent-startup-shell'
@@ -61,6 +59,8 @@ type AiVaultResumeWorktreeArgs = {
   worktreeId?: string | null
   session: AiVaultResumeCommandSession
   commandOverride?: string | null
+  /** Model preset the resumed session should start on; null keeps the agent's configured args. */
+  modelId?: string | null
 }
 
 export function buildAiVaultResumeCopyCommandForWorktree(args: AiVaultResumeWorktreeArgs): string {
@@ -130,7 +130,10 @@ function buildAiVaultResumeForWorktree(
     args.session.resumeCommand &&
     args.session.agent !== 'omp' &&
     !(args.session.agent === 'codex' && args.session.codexHome === null) &&
-    !args.commandOverride?.trim()
+    !args.commandOverride?.trim() &&
+    // Why: the host's prebuilt resume command cannot carry a model pick, so a
+    // picked model has to go down the rebuild path like a command override does.
+    !args.modelId
   ) {
     return {
       command: args.session.resumeCommand,
@@ -168,10 +171,11 @@ function buildAiVaultResumeForWorktree(
       },
       platform,
       shell: liveShell,
-      agentArgs: resolveTuiAgentLaunchArgs(
-        args.session.agent,
-        args.state.settings?.agentDefaultArgs
-      ),
+      agentArgs: resolveTuiAgentLaunchArgsForModel({
+        agent: args.session.agent,
+        modelId: args.modelId,
+        configuredArgs: args.state.settings?.agentDefaultArgs
+      }),
       agentEnv: resolveTuiAgentLaunchEnv(args.session.agent, args.state.settings?.agentDefaultEnv),
       ...(args.session.agent === 'omp' && resumeFilePath
         ? { ompResumeFilePath: resumeFilePath }

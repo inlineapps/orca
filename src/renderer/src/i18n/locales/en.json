@@ -15653,7 +15653,10 @@
       "agentUnavailable": "{{agent}} was not detected on this workspace host.",
       "sent": "Session context sent to {{agent}} in a new session.",
       "deliveryFailed": "The new {{agent}} session started, but its context could not be sent.",
-      "launchFailed": "Could not start a new {{agent}} session."
+      "launchFailed": "Could not start a new {{agent}} session.",
+      "copyPrompt": "Copy prompt",
+      "promptCopied": "Prompt copied",
+      "copyPromptFailed": "Could not copy the prompt."
     },
     "status": {
       "bar": {
@@ -15661,6 +15664,19 @@
           "otherTopLevelItems": "Other top-level items ({{value0}})"
         }
       }
+    },
+    "tabBar": {
+      "quickLaunch": {
+        "defaultModel": "Default model",
+        "launchAgentWithModel": "Launch {{value0}} on {{value1}} in a new terminal"
+      }
+    },
+    "newWorkspaceComposer": {
+      "agentModelLabel": "Agent model",
+      "defaultModel": "Default model"
+    },
+    "aiVault": {
+      "resumeOnModel": "Resume on Model"
     }
   },
   "dashboardPopout": {
