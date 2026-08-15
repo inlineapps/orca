@@ -2,7 +2,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { AgentStatusState } from '../../../../shared/agent-status-types'
 import type { AiVaultScope, AiVaultSession } from '../../../../shared/ai-vault-types'
-import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
+import { getAgentLaunchPresets } from '../../../../shared/agent-launch-preset'
 import type { AiVaultResumeStartup } from '@/lib/ai-vault-resume-command'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -87,7 +87,7 @@ export function AiVaultSessionVirtualList({
   onToggleGroup: (key: string) => void
   onJumpToOriginalPane: (session: AiVaultSession) => void
   onJumpToWorktree: (worktreeId: string) => void
-  onResume: (session: AiVaultSession, worktreeId: string, modelId?: string | null) => void
+  onResume: (session: AiVaultSession, worktreeId: string, presetId?: string | null) => void
   onContinueInNewSession: (session: AiVaultSession, worktreeId: string) => void
   onCopyResume: (session: AiVaultSession, worktreeId?: string | null) => void
   onCopyId: (session: AiVaultSession) => void
@@ -288,7 +288,7 @@ function AiVaultVirtualRow({
   onToggleSessionDetails: (sessionId: string) => void
   onJumpToOriginalPane: (session: AiVaultSession) => void
   onJumpToWorktree: (worktreeId: string) => void
-  onResume: (session: AiVaultSession, worktreeId: string, modelId?: string | null) => void
+  onResume: (session: AiVaultSession, worktreeId: string, presetId?: string | null) => void
   onContinueInNewSession: (session: AiVaultSession, worktreeId: string) => void
   onCopyResume: (session: AiVaultSession, worktreeId?: string | null) => void
   onCopyId: (session: AiVaultSession) => void
@@ -376,10 +376,10 @@ function AiVaultVirtualRow({
           }
           showJumpToWorktree={showJumpToWorktree}
           onJumpToWorktree={worktreeJumpId ? () => onJumpToWorktree(worktreeJumpId) : undefined}
-          resumeModelVariants={getAgentLaunchModelVariants(row.session.agent)}
-          onResumeWithModel={
+          resumeLaunchPresets={getAgentLaunchPresets(row.session.agent)}
+          onResumeWithPreset={
             resumeWorktreeId
-              ? (modelId) => onResume(row.session, resumeWorktreeId, modelId)
+              ? (presetId) => onResume(row.session, resumeWorktreeId, presetId)
               : undefined
           }
           onResume={() => {

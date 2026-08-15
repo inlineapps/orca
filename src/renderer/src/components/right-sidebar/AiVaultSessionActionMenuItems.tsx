@@ -22,9 +22,9 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger
 } from '@/components/ui/context-menu'
-import type { AgentLaunchModelVariant } from '../../../../shared/agent-launch-model-variant'
+import type { AgentLaunchPreset } from '../../../../shared/agent-launch-preset'
 
-const NO_MODEL_VARIANTS: readonly AgentLaunchModelVariant[] = []
+const NO_LAUNCH_PRESETS: readonly AgentLaunchPreset[] = []
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 
@@ -33,8 +33,8 @@ export function SessionActionMenuItems({
   resumeDisabled,
   resumeLabel,
   onResume,
-  resumeModelVariants = NO_MODEL_VARIANTS,
-  onResumeWithModel,
+  resumeLaunchPresets = NO_LAUNCH_PRESETS,
+  onResumeWithPreset,
   onContinueInNewSession,
   onJumpToOriginalPane,
   showJumpToWorktree,
@@ -53,8 +53,8 @@ export function SessionActionMenuItems({
   resumeLabel: string
   onResume: () => void
   /** Model presets the session's agent can be resumed on; empty hides the submenu. */
-  resumeModelVariants?: readonly AgentLaunchModelVariant[]
-  onResumeWithModel?: (modelId: string) => void
+  resumeLaunchPresets?: readonly AgentLaunchPreset[]
+  onResumeWithPreset?: (presetId: string) => void
   onContinueInNewSession?: () => void
   onJumpToOriginalPane?: () => void
   showJumpToWorktree: boolean
@@ -116,16 +116,16 @@ export function SessionActionMenuItems({
         <Play className="size-3.5" />
         {resumeLabel}
       </Item>
-      {onResumeWithModel && resumeModelVariants.length > 0 ? (
+      {onResumeWithPreset && resumeLaunchPresets.length > 0 ? (
         <Sub>
           <SubTrigger disabled={resumeDisabled}>
             <Play className="size-3.5" />
             {translate('components.aiVault.resumeOnModel', 'Resume on Model')}
           </SubTrigger>
           <SubContent>
-            {resumeModelVariants.map((variant) => (
-              <Item key={variant.modelId} onSelect={() => onResumeWithModel(variant.modelId)}>
-                {variant.label}
+            {resumeLaunchPresets.map((preset) => (
+              <Item key={preset.id} onSelect={() => onResumeWithPreset(preset.id)}>
+                {preset.label}
               </Item>
             ))}
           </SubContent>
