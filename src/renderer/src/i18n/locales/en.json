@@ -18110,7 +18110,9 @@
       "copyPrompt": "Copy prompt",
       "launchFailed": "Could not start a new {{agent}} session.",
       "promptCopied": "Prompt copied",
-      "copyPromptFailed": "Could not copy the prompt."
+      "copyPromptFailed": "Could not copy the prompt.",
+      "model": "Model",
+      "defaultModel": "Default model"
     },
     "status": {
       "bar": {
