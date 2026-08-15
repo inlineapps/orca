@@ -71,7 +71,13 @@ vi.mock('@/components/ui/dropdown-menu', async () => {
     DropdownMenuItem: ({ children, ...props }: { children: React.ReactNode }) =>
       ReactActual.createElement('div', props, children),
     DropdownMenuShortcut: ({ children }: { children: React.ReactNode }) =>
-      ReactActual.createElement('span', { 'data-dropdown-shortcut': 'true' }, children)
+      ReactActual.createElement('span', { 'data-dropdown-shortcut': 'true' }, children),
+    DropdownMenuSub: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', null, children),
+    DropdownMenuSubTrigger: ({ children, ...props }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', props, children),
+    DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', null, children)
   }
 })
 
@@ -137,6 +143,17 @@ describe('QuickLaunchAgentMenuItems', () => {
     expect(rowMarkup(html, 'Codex')).toContain('⌘⌥T')
     expect(rowMarkup(html, 'Claude')).not.toContain('⌘⌥T')
     expect(rowMarkup(html, 'Gemini')).not.toContain('⌘⌥T')
+  })
+
+  it('offers each cataloged model under its agent, keeping the plain launch first', () => {
+    const html = renderAgentMenuItems()
+
+    expect(html).toContain('title="Launch Claude in a new terminal"')
+    expect(html).toContain('title="Launch Claude on Opus in a new terminal"')
+    expect(html).toContain('title="Launch Claude on Fable in a new terminal"')
+    expect(html).toContain('title="Launch Gemini on Gemini 2.5 Flash in a new terminal"')
+    // One "Default model" entry per agent that has a model catalog.
+    expect(html.match(/>Default model</g) ?? []).toHaveLength(3)
   })
 
   it('hides the default-agent shortcut when the action is unbound', () => {
