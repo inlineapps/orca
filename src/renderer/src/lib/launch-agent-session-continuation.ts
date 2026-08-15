@@ -6,12 +6,15 @@ import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner
 import { useAppStore } from '@/store'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
 import { TUI_AGENT_CONFIG } from '../../../shared/tui-agent-config'
+import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
 import type { LaunchSource } from '../../../shared/telemetry-events'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { translate } from '@/i18n/i18n'
 
 type LaunchAgentSessionContinuationArgs = {
   agent: TuiAgent
+  /** Model preset the new session starts on; omitted keeps the agent's configured args. */
+  modelId?: string | null
   prompt: string
   worktreeId: string
   groupId?: string | null
@@ -90,6 +93,7 @@ async function preflightAgentTrust(args: {
 
 export async function launchAgentSessionContinuation({
   agent,
+  modelId,
   prompt,
   worktreeId,
   groupId,
@@ -109,6 +113,15 @@ export async function launchAgentSessionContinuation({
     agent,
     worktreeId,
     ...(groupId ? { groupId } : {}),
+    ...(modelId
+      ? {
+          agentArgs: resolveTuiAgentLaunchArgsForModel({
+            agent,
+            modelId,
+            configuredArgs: useAppStore.getState().settings?.agentDefaultArgs
+          })
+        }
+      : {}),
     prompt,
     promptDelivery: 'submit-after-ready',
     launchSource,
