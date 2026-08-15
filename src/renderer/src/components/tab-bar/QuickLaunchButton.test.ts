@@ -145,15 +145,18 @@ describe('QuickLaunchAgentMenuItems', () => {
     expect(rowMarkup(html, 'Gemini')).not.toContain('⌘⌥T')
   })
 
-  it('offers each cataloged model under its agent, keeping the plain launch first', () => {
+  it('offers the curated Claude presets and leaves other agents a plain row', () => {
     const html = renderAgentMenuItems()
 
     expect(html).toContain('title="Launch Claude in a new terminal"')
-    expect(html).toContain('title="Launch Claude on Opus in a new terminal"')
-    expect(html).toContain('title="Launch Claude on Fable in a new terminal"')
-    expect(html).toContain('title="Launch Gemini on Gemini 2.5 Flash in a new terminal"')
-    // One "Default model" entry per agent that has a model catalog.
-    expect(html.match(/>Default model</g) ?? []).toHaveLength(3)
+    expect(html).toContain('title="Launch Claude on Opus · Low in a new terminal"')
+    expect(html).toContain('title="Launch Claude on Opus · High in a new terminal"')
+    expect(html).toContain('title="Launch Claude on Fable · Low in a new terminal"')
+    expect(html).toContain('title="Launch Claude on Fable · High in a new terminal"')
+    // Only Claude is curated, so only Claude grows the extra "agent default" row.
+    expect(html.match(/>Agent default</g) ?? []).toHaveLength(1)
+    expect(html).not.toContain('Launch Codex on')
+    expect(html).not.toContain('Launch Gemini on')
   })
 
   it('hides the default-agent shortcut when the action is unbound', () => {

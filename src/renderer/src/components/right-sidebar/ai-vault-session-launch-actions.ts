@@ -52,13 +52,13 @@ export function useAiVaultSessionLaunchActions({
   )
 
   const buildResumeStartup = useCallback(
-    (session: AiVaultSession, worktreeId?: string | null, modelId?: string | null) =>
+    (session: AiVaultSession, worktreeId?: string | null, presetId?: string | null) =>
       buildAiVaultResumeStartupForWorktree({
         state: useAppStore.getState(),
         worktreeId: worktreeId ?? activeWorktreeId ?? activeWorktree?.id ?? null,
         session,
         commandOverride: agentCmdOverrides?.[session.agent],
-        ...(modelId ? { modelId } : {})
+        ...(presetId ? { presetId } : {})
       }),
     [activeWorktree?.id, activeWorktreeId, agentCmdOverrides]
   )
@@ -85,7 +85,7 @@ export function useAiVaultSessionLaunchActions({
   )
 
   const handleResume = useCallback(
-    (session: AiVaultSession, targetWorktreeId?: string, modelId?: string | null): void => {
+    (session: AiVaultSession, targetWorktreeId?: string, presetId?: string | null): void => {
       if (session.structuredSession) {
         void activateAiVaultStructuredSession(session)
         return
@@ -115,7 +115,7 @@ export function useAiVaultSessionLaunchActions({
           const launchResult = launchAiVaultSessionInNewTab({
             agent: session.agent,
             worktreeId: targetId.worktreeId,
-            ...buildResumeStartup(preparedSession, targetId.worktreeId, modelId)
+            ...buildResumeStartup(preparedSession, targetId.worktreeId, presetId)
           })
           if (launchResult.tabId === null) {
             void launchResult.runtimeLaunch.then((outcome) => {
