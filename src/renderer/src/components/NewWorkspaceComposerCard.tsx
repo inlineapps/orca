@@ -18,6 +18,14 @@ import { SwitchIndicator } from '@/components/ui/switch'
 import { SettingsSwitch } from '@/components/settings/SettingsFormControls'
 import type RepoCombobox from '@/components/repo/RepoCombobox'
 import AgentCombobox from '@/components/agent/AgentCombobox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { getAgentLaunchModelVariants } from '../../../shared/agent-launch-model-variant'
 import { getAgentCatalog } from '@/lib/agent-catalog'
 import {
   DEFAULT_DISABLED_TUI_AGENTS,
@@ -72,6 +80,8 @@ type EphemeralVmRecipeOption = NonNullable<OrcaHooks['environmentRecipes']>[numb
 const EMPTY_PROJECT_OPTIONS: NewWorkspaceProjectOption[] = []
 const EMPTY_PROJECT_HOST_SETUP_OPTIONS: ProjectHostSetupOption[] = []
 const EMPTY_EPHEMERAL_VM_RECIPES: EphemeralVmRecipeOption[] = []
+// Why: Radix Select forbids an empty item value, so "no model pick" needs a sentinel.
+const AGENT_DEFAULT_MODEL_VALUE = '__agent_default_model__'
 
 type NewWorkspaceComposerCardProps = {
   contextualTourSource?: string
@@ -81,6 +91,9 @@ type NewWorkspaceComposerCardProps = {
   nameInputRef?: React.RefObject<HTMLInputElement | null>
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
+  /** Model preset the picked agent launches on. null keeps the agent's configured default. */
+  quickAgentModelId: string | null
+  onQuickAgentModelChange: (modelId: string | null) => void
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]
@@ -295,6 +308,8 @@ export default function NewWorkspaceComposerCard({
   nameInputRef,
   quickAgent,
   onQuickAgentChange,
+  quickAgentModelId,
+  onQuickAgentModelChange,
   eligibleRepos,
   repoId,
   projectOptions = EMPTY_PROJECT_OPTIONS,
@@ -480,6 +495,11 @@ export default function NewWorkspaceComposerCard({
         enabledIds.has(agent.id) && (detectedAgentIds === null || detectedAgentIds.has(agent.id))
     )
   }, [detectedAgentIds, disabledTuiAgents])
+
+  const quickAgentModelVariants = React.useMemo(
+    () => (quickAgent ? getAgentLaunchModelVariants(quickAgent) : []),
+    [quickAgent]
+  )
 
   const handleAddRepo = React.useCallback((): void => {
     // Why: swapping activeModal would unmount the composer, so the override layers Add Project on top instead.
@@ -904,6 +924,35 @@ export default function NewWorkspaceComposerCard({
             triggerClassName="h-9 w-full min-w-0 border-input text-sm focus:border-ring focus:ring-[3px] focus:ring-ring/50"
             onTriggerEnter={createDisabled ? undefined : onCreate}
           />
+          {quickAgentModelVariants.length > 0 ? (
+            <Select
+              value={quickAgentModelId ?? AGENT_DEFAULT_MODEL_VALUE}
+              onValueChange={(value) =>
+                onQuickAgentModelChange(value === AGENT_DEFAULT_MODEL_VALUE ? null : value)
+              }
+            >
+              <SelectTrigger
+                size="sm"
+                className="h-8 w-full min-w-0 text-xs"
+                aria-label={translate(
+                  'components.newWorkspaceComposer.agentModelLabel',
+                  'Agent model'
+                )}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={AGENT_DEFAULT_MODEL_VALUE}>
+                  {translate('components.newWorkspaceComposer.defaultModel', 'Default model')}
+                </SelectItem>
+                {quickAgentModelVariants.map((variant) => (
+                  <SelectItem key={variant.modelId} value={variant.modelId}>
+                    {variant.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
         </div>
 
         {/* Why: keep the Advanced disclosure header grouped with the content below while preserving spacing from the Agent field above. */}

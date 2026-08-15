@@ -29,6 +29,7 @@ import {
   resolveTuiAgentLaunchArgs,
   resolveTuiAgentLaunchEnv
 } from '../../../shared/tui-agent-launch-defaults'
+import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { isGitRepoKind } from '../../../shared/repo-kind'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
@@ -403,7 +404,7 @@ export type UseComposerStateResult = {
   promptTextareaRef: React.RefObject<HTMLTextAreaElement | null>
   nameInputRef: React.RefObject<HTMLInputElement | null>
   submit: () => Promise<void>
-  submitQuick: (agent: TuiAgent | null) => Promise<void>
+  submitQuick: (agent: TuiAgent | null, modelId?: string | null) => Promise<void>
   /** Invoked by the Enter handler to re-check whether submission should fire. */
   createDisabled: boolean
   /** Selects the repo a nested Add Project flow just added, clearing any folder-group target so the composer lands on it. */
@@ -3423,7 +3424,7 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
     folderTargetRequiresConnection
 
   const submitFolderTarget = useCallback(
-    async (requestedAgent: TuiAgent | null): Promise<void> => {
+    async (requestedAgent: TuiAgent | null, requestedModelId?: string | null): Promise<void> => {
       if (!selectedProjectGroup?.parentPath || folderCreateDisabled) {
         return
       }
@@ -3468,7 +3469,11 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
           autoRenameBranchFromWork: settings?.autoRenameBranchFromWork,
           agentCmdOverrides: settings?.agentCmdOverrides,
           agentArgs: agent
-            ? resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs)
+            ? resolveTuiAgentLaunchArgsForModel({
+                agent,
+                modelId: requestedModelId,
+                configuredArgs: settings?.agentDefaultArgs
+              })
             : undefined,
           agentEnv: agent ? resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv) : undefined,
           sessionOptions: agent
@@ -4064,9 +4069,9 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
   }, [])
 
   const submitQuick = useCallback(
-    async (requestedAgent: TuiAgent | null): Promise<void> => {
+    async (requestedAgent: TuiAgent | null, requestedModelId?: string | null): Promise<void> => {
       if (isProjectGroupTarget) {
-        await submitFolderTarget(requestedAgent)
+        await submitFolderTarget(requestedAgent, requestedModelId)
         return
       }
       const workspaceNameSeed = getWorkspaceSeedName({
@@ -4378,7 +4383,11 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
                 agent,
                 draft: quickDraftPrompt,
                 cmdOverrides: settings?.agentCmdOverrides ?? {},
-                agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
+                agentArgs: resolveTuiAgentLaunchArgsForModel({
+                  agent,
+                  modelId: requestedModelId,
+                  configuredArgs: settings?.agentDefaultArgs
+                }),
                 agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
                 sessionOptions: quickSessionOptions,
                 platform: selectedRepoAgentLaunchPlatform,
@@ -4407,7 +4416,11 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
             agent,
             prompt: quickPrompt,
             cmdOverrides: settings?.agentCmdOverrides ?? {},
-            agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
+            agentArgs: resolveTuiAgentLaunchArgsForModel({
+              agent,
+              modelId: requestedModelId,
+              configuredArgs: settings?.agentDefaultArgs
+            }),
             agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
             sessionOptions: quickSessionOptions,
             platform: selectedRepoAgentLaunchPlatform,
