@@ -43,15 +43,33 @@ vi.mock('@/components/ui/dialog', () => ({
     React.createElement('header', null, children),
   DialogTitle: ({ children }: { children?: ReactNode }) => React.createElement('h2', null, children)
 }))
+// Why: a native select keeps the mock driveable — tests can pick an option and
+// see the value reach onValueChange, which a div stack cannot express.
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children }: { children?: ReactNode }) => React.createElement('div', null, children),
+  Select: ({
+    value,
+    onValueChange,
+    children
+  }: {
+    value?: string
+    onValueChange?: (value: string) => void
+    children?: ReactNode
+  }) =>
+    React.createElement(
+      'select',
+      {
+        value: value ?? '',
+        onChange: (event: React.ChangeEvent<HTMLSelectElement>) =>
+          onValueChange?.(event.target.value)
+      },
+      children
+    ),
   SelectContent: ({ children }: { children?: ReactNode }) =>
-    React.createElement('div', null, children),
-  SelectItem: ({ children }: { children?: ReactNode }) =>
-    React.createElement('div', null, children),
-  SelectTrigger: ({ children }: { children?: ReactNode }) =>
-    React.createElement('button', null, children),
-  SelectValue: () => React.createElement('span')
+    React.createElement(React.Fragment, null, children),
+  SelectItem: ({ value, children }: { value: string; children?: ReactNode }) =>
+    React.createElement('option', { value }, children),
+  SelectTrigger: () => null,
+  SelectValue: () => null
 }))
 
 import { AgentSessionContinuationDialog } from './AgentSessionContinuationDialog'
@@ -66,6 +84,13 @@ function request(
     workspacePath: '/repo',
     launchSource: 'sidebar'
   }
+}
+
+// Why: React tracks a controlled select's value, so a plain assignment before
+// dispatch is swallowed; go through the prototype setter it does not shadow.
+function selectOption(select: HTMLSelectElement, value: string): void {
+  Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set?.call(select, value)
+  select.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
 function findButton(container: HTMLElement, label: string): HTMLButtonElement | null {
@@ -184,5 +209,49 @@ describe('AgentSessionContinuationDialog', () => {
     expect(mocks.toastError).toHaveBeenCalledTimes(1)
     expect(container.textContent).not.toContain('Prompt copied')
     consoleError.mockRestore()
+  })
+
+  it('starts the new session on the picked model', async () => {
+    mocks.detectAgents.mockResolvedValue(['codex'])
+    mocks.launchContinuation.mockResolvedValue(true)
+
+    await act(async () => {
+      root.render(
+        <AgentSessionContinuationDialog open request={request('wt-11')} onOpenChange={vi.fn()} />
+      )
+    })
+
+    const modelSelect = Array.from(container.querySelectorAll('select')).find((select) =>
+      select.querySelector('option[value="gpt-5.5"]')
+    )
+    expect(modelSelect).toBeDefined()
+
+    await act(async () => {
+      selectOption(modelSelect!, 'gpt-5.5')
+    })
+    await act(async () => {
+      findButton(container, 'Start New Session')?.click()
+    })
+
+    expect(mocks.launchContinuation).toHaveBeenCalledWith(
+      expect.objectContaining({ agent: 'codex', modelId: 'gpt-5.5' })
+    )
+  })
+
+  it('leaves the model out of the launch when none is picked', async () => {
+    mocks.detectAgents.mockResolvedValue(['codex'])
+    mocks.launchContinuation.mockResolvedValue(true)
+
+    await act(async () => {
+      root.render(
+        <AgentSessionContinuationDialog open request={request('wt-12')} onOpenChange={vi.fn()} />
+      )
+    })
+    await act(async () => {
+      findButton(container, 'Start New Session')?.click()
+    })
+
+    expect(mocks.launchContinuation).toHaveBeenCalledTimes(1)
+    expect(mocks.launchContinuation.mock.calls[0][0]).not.toHaveProperty('modelId')
   })
 })
