@@ -2,15 +2,28 @@ import React from 'react'
 import { ChevronDown, Settings2 } from 'lucide-react'
 import AgentCombobox from '@/components/agent/AgentCombobox'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
+import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
 import type { NewWorkspaceComposerCardProps } from './new-workspace-composer-card-props'
+
+// Why: Radix Select forbids an empty item value, so "no model pick" needs a sentinel.
+const AGENT_DEFAULT_MODEL_VALUE = '__agent_default_model__'
 
 type NewWorkspaceComposerAgentSectionProps = Pick<
   NewWorkspaceComposerCardProps,
   | 'quickAgent'
   | 'onQuickAgentChange'
+  | 'quickAgentModelId'
+  | 'onQuickAgentModelChange'
   | 'onOpenAgentSettings'
   | 'createDisabled'
   | 'onCreate'
@@ -27,6 +40,8 @@ type NewWorkspaceComposerAgentSectionProps = Pick<
 export function NewWorkspaceComposerAgentSection({
   quickAgent,
   onQuickAgentChange,
+  quickAgentModelId,
+  onQuickAgentModelChange,
   onOpenAgentSettings,
   createDisabled,
   onCreate,
@@ -36,6 +51,10 @@ export function NewWorkspaceComposerAgentSection({
   defaultTuiAgent,
   handleSetDefaultAgent
 }: NewWorkspaceComposerAgentSectionProps): React.JSX.Element {
+  const quickAgentModelVariants = React.useMemo(
+    () => (quickAgent ? getAgentLaunchModelVariants(quickAgent) : []),
+    [quickAgent]
+  )
   return (
     <>
       <div className="min-w-0 space-y-1" data-contextual-tour-target="workspace-creation-agent">
@@ -76,6 +95,35 @@ export function NewWorkspaceComposerAgentSection({
           triggerClassName="h-9 w-full min-w-0 border-input text-sm focus:border-ring focus:ring-[3px] focus:ring-ring/50"
           onTriggerEnter={createDisabled ? undefined : onCreate}
         />
+        {quickAgentModelVariants.length > 0 ? (
+          <Select
+            value={quickAgentModelId ?? AGENT_DEFAULT_MODEL_VALUE}
+            onValueChange={(value) =>
+              onQuickAgentModelChange?.(value === AGENT_DEFAULT_MODEL_VALUE ? null : value)
+            }
+          >
+            <SelectTrigger
+              size="sm"
+              className="h-8 w-full min-w-0 text-xs"
+              aria-label={translate(
+                'components.newWorkspaceComposer.agentModelLabel',
+                'Agent model'
+              )}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={AGENT_DEFAULT_MODEL_VALUE}>
+                {translate('components.newWorkspaceComposer.defaultModel', 'Default model')}
+              </SelectItem>
+              {quickAgentModelVariants.map((variant) => (
+                <SelectItem key={variant.modelId} value={variant.modelId}>
+                  {variant.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
       </div>
 
       <div className="!mb-2">
