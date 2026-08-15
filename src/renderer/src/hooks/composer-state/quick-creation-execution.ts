@@ -81,6 +81,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
     async (
       smartGitHubResolution: PendingSmartGitHubSubmitResolution,
       requestedAgent: TuiAgent | null,
+      requestedModelId: string | null | undefined,
       workspaceNameSeed: string,
       workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
       repoId: string,
@@ -128,6 +129,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         telemetry: quickTelemetry
       } = buildQuickComposerStartup({
         agent,
+        modelId: requestedModelId,
         prompt: quickPrompt,
         draftPrompt: quickDraftPrompt,
         settings,
