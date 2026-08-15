@@ -32,6 +32,7 @@ import {
 } from '@/lib/launch-agent-session-continuation'
 import { useAppStore } from '@/store'
 import { isTuiAgentEnabled } from '../../../../shared/tui-agent-selection'
+import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import { chooseInitialContinuationAgent } from './agent-session-continuation-selection'
 
@@ -42,6 +43,8 @@ type AgentSessionContinuationDialogProps = {
 }
 
 const EMPTY_DISABLED_AGENTS: TuiAgent[] = []
+// Why: Radix Select forbids an empty item value, so "no model pick" needs a sentinel.
+const AGENT_DEFAULT_MODEL_VALUE = '__agent_default_model__'
 
 export function AgentSessionContinuationDialog({
   open,
@@ -51,6 +54,7 @@ export function AgentSessionContinuationDialog({
   const settings = useAppStore((state) => state.settings)
   const [detectedAgents, setDetectedAgents] = useState<TuiAgent[]>([])
   const [selectedAgent, setSelectedAgent] = useState<TuiAgent | null>(null)
+  const [modelId, setModelId] = useState<string | null>(null)
   const [contextMode, setContextMode] = useState<AgentSessionContinuationContextMode>('focused')
   const [detecting, setDetecting] = useState(true)
   const [detectionFailed, setDetectionFailed] = useState(false)
@@ -89,6 +93,7 @@ export function AgentSessionContinuationDialog({
         }
         const enabled = detected.filter((agent) => isTuiAgentEnabled(agent, disabledAgents))
         setDetectedAgents(enabled)
+        setModelId(null)
         setSelectedAgent(
           chooseInitialContinuationAgent({
             availableAgents: enabled,
@@ -155,6 +160,11 @@ export function AgentSessionContinuationDialog({
     }
   }
 
+  const modelVariants = useMemo(
+    () => (selectedAgent ? getAgentLaunchModelVariants(selectedAgent) : []),
+    [selectedAgent]
+  )
+
   const handleStart = async (): Promise<void> => {
     if (!request || !selectedAgent || starting) {
       return
@@ -165,6 +175,7 @@ export function AgentSessionContinuationDialog({
     setStarting(true)
     const launched = await launchAgentSessionContinuation({
       agent: selectedAgent,
+      ...(modelId ? { modelId } : {}),
       prompt: continuationPrompt,
       worktreeId: request.worktreeId,
       groupId: request.groupId,
@@ -234,7 +245,11 @@ export function AgentSessionContinuationDialog({
             <AgentCombobox
               agents={agents}
               value={selectedAgent}
-              onValueChange={setSelectedAgent}
+              onValueChange={(agent) => {
+                // Why: a model belongs to the agent it was picked for; switching agents drops it.
+                setSelectedAgent(agent)
+                setModelId(null)
+              }}
               allowBlankTerminal={false}
               allowNarrowTrigger
               emptyLabel={translate(
@@ -266,6 +281,34 @@ export function AgentSessionContinuationDialog({
               </p>
             ) : null}
           </div>
+
+          {modelVariants.length > 0 ? (
+            <div className="min-w-0 space-y-1.5">
+              <label className="text-xs font-medium">
+                {translate('components.agentSessionContinuation.model', 'Model')}
+              </label>
+              <Select
+                value={modelId ?? AGENT_DEFAULT_MODEL_VALUE}
+                onValueChange={(value) =>
+                  setModelId(value === AGENT_DEFAULT_MODEL_VALUE ? null : value)
+                }
+              >
+                <SelectTrigger className="min-w-0 w-full" size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={AGENT_DEFAULT_MODEL_VALUE}>
+                    {translate('components.agentSessionContinuation.defaultModel', 'Default model')}
+                  </SelectItem>
+                  {modelVariants.map((variant) => (
+                    <SelectItem key={variant.modelId} value={variant.modelId}>
+                      {variant.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
 
           <div className="min-w-0 space-y-1.5">
             <label className="text-xs font-medium">
