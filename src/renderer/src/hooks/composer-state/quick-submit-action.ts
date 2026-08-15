@@ -66,9 +66,9 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
   } = input
 
   const submitQuick = useCallback(
-    async (requestedAgent: TuiAgent | null, requestedModelId?: string | null): Promise<void> => {
+    async (requestedAgent: TuiAgent | null, requestedPresetId?: string | null): Promise<void> => {
       if (isProjectGroupTarget) {
-        await submitFolderTarget(requestedAgent, requestedModelId)
+        await submitFolderTarget(requestedAgent, requestedPresetId)
         return
       }
 
@@ -141,7 +141,7 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
         await executeQuickCreation(
           smartGitHubSettlement.value,
           requestedAgent,
-          requestedModelId,
+          requestedPresetId,
           workspaceNameSeed,
           workspaceRunContext,
           repoId,

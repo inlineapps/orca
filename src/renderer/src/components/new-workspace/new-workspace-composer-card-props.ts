@@ -35,8 +35,8 @@ export type NewWorkspaceComposerCardProps = {
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
   /** Model preset the picked agent launches on. null keeps the agent's configured default. */
-  quickAgentModelId?: string | null
-  onQuickAgentModelChange?: (modelId: string | null) => void
+  quickAgentPresetId?: string | null
+  onQuickAgentPresetChange?: (presetId: string | null) => void
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]

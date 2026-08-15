@@ -23,8 +23,11 @@ vi.mock('@/lib/launch-agent-session-continuation', () => ({
   launchAgentSessionContinuation: mocks.launchContinuation
 }))
 vi.mock('@/lib/agent-catalog', () => ({
-  getAgentCatalog: () => [{ id: 'codex', label: 'Codex' }],
-  getAgentLabel: () => 'Codex'
+  getAgentCatalog: () => [
+    { id: 'claude', label: 'Claude' },
+    { id: 'codex', label: 'Codex' }
+  ],
+  getAgentLabel: (agent: string) => (agent === 'claude' ? 'Claude' : 'Codex')
 }))
 vi.mock('@/components/agent/AgentCombobox', () => ({
   default: ({ value }: { value: string | null }) =>
@@ -211,40 +214,48 @@ describe('AgentSessionContinuationDialog', () => {
     consoleError.mockRestore()
   })
 
-  it('starts the new session on the picked model', async () => {
-    mocks.detectAgents.mockResolvedValue(['codex'])
+  it('starts the new session on the picked preset', async () => {
+    mocks.detectAgents.mockResolvedValue(['claude'])
     mocks.launchContinuation.mockResolvedValue(true)
 
     await act(async () => {
       root.render(
-        <AgentSessionContinuationDialog open request={request('wt-11')} onOpenChange={vi.fn()} />
+        <AgentSessionContinuationDialog
+          open
+          request={request('wt-11', { sourceAgent: 'claude' })}
+          onOpenChange={vi.fn()}
+        />
       )
     })
 
-    const modelSelect = Array.from(container.querySelectorAll('select')).find((select) =>
-      select.querySelector('option[value="gpt-5.5"]')
+    const presetSelect = Array.from(container.querySelectorAll('select')).find((select) =>
+      select.querySelector('option[value="fable:high"]')
     )
-    expect(modelSelect).toBeDefined()
+    expect(presetSelect).toBeDefined()
 
     await act(async () => {
-      selectOption(modelSelect!, 'gpt-5.5')
+      selectOption(presetSelect!, 'fable:high')
     })
     await act(async () => {
       findButton(container, 'Start New Session')?.click()
     })
 
     expect(mocks.launchContinuation).toHaveBeenCalledWith(
-      expect.objectContaining({ agent: 'codex', modelId: 'gpt-5.5' })
+      expect.objectContaining({ agent: 'claude', presetId: 'fable:high' })
     )
   })
 
-  it('leaves the model out of the launch when none is picked', async () => {
-    mocks.detectAgents.mockResolvedValue(['codex'])
+  it('leaves the preset out of the launch when none is picked', async () => {
+    mocks.detectAgents.mockResolvedValue(['claude'])
     mocks.launchContinuation.mockResolvedValue(true)
 
     await act(async () => {
       root.render(
-        <AgentSessionContinuationDialog open request={request('wt-12')} onOpenChange={vi.fn()} />
+        <AgentSessionContinuationDialog
+          open
+          request={request('wt-12', { sourceAgent: 'claude' })}
+          onOpenChange={vi.fn()}
+        />
       )
     })
     await act(async () => {
@@ -252,6 +263,18 @@ describe('AgentSessionContinuationDialog', () => {
     })
 
     expect(mocks.launchContinuation).toHaveBeenCalledTimes(1)
-    expect(mocks.launchContinuation.mock.calls[0][0]).not.toHaveProperty('modelId')
+    expect(mocks.launchContinuation.mock.calls[0][0]).not.toHaveProperty('presetId')
+  })
+
+  it('offers no preset field for an agent outside the curated set', async () => {
+    mocks.detectAgents.mockResolvedValue(['codex'])
+
+    await act(async () => {
+      root.render(
+        <AgentSessionContinuationDialog open request={request('wt-13')} onOpenChange={vi.fn()} />
+      )
+    })
+
+    expect(container.textContent).not.toContain('Model & effort')
   })
 })

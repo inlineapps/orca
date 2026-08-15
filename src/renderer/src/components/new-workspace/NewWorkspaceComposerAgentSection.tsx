@@ -12,18 +12,18 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
+import { getAgentLaunchPresets } from '../../../../shared/agent-launch-preset'
 import type { NewWorkspaceComposerCardProps } from './new-workspace-composer-card-props'
 
 // Why: Radix Select forbids an empty item value, so "no model pick" needs a sentinel.
-const AGENT_DEFAULT_MODEL_VALUE = '__agent_default_model__'
+const AGENT_DEFAULT_PRESET_VALUE = '__agent_default_model__'
 
 type NewWorkspaceComposerAgentSectionProps = Pick<
   NewWorkspaceComposerCardProps,
   | 'quickAgent'
   | 'onQuickAgentChange'
-  | 'quickAgentModelId'
-  | 'onQuickAgentModelChange'
+  | 'quickAgentPresetId'
+  | 'onQuickAgentPresetChange'
   | 'onOpenAgentSettings'
   | 'createDisabled'
   | 'onCreate'
@@ -40,8 +40,8 @@ type NewWorkspaceComposerAgentSectionProps = Pick<
 export function NewWorkspaceComposerAgentSection({
   quickAgent,
   onQuickAgentChange,
-  quickAgentModelId,
-  onQuickAgentModelChange,
+  quickAgentPresetId,
+  onQuickAgentPresetChange,
   onOpenAgentSettings,
   createDisabled,
   onCreate,
@@ -51,8 +51,8 @@ export function NewWorkspaceComposerAgentSection({
   defaultTuiAgent,
   handleSetDefaultAgent
 }: NewWorkspaceComposerAgentSectionProps): React.JSX.Element {
-  const quickAgentModelVariants = React.useMemo(
-    () => (quickAgent ? getAgentLaunchModelVariants(quickAgent) : []),
+  const quickAgentLaunchPresets = React.useMemo(
+    () => (quickAgent ? getAgentLaunchPresets(quickAgent) : []),
     [quickAgent]
   )
   return (
@@ -95,30 +95,30 @@ export function NewWorkspaceComposerAgentSection({
           triggerClassName="h-9 w-full min-w-0 border-input text-sm focus:border-ring focus:ring-[3px] focus:ring-ring/50"
           onTriggerEnter={createDisabled ? undefined : onCreate}
         />
-        {quickAgentModelVariants.length > 0 ? (
+        {quickAgentLaunchPresets.length > 0 ? (
           <Select
-            value={quickAgentModelId ?? AGENT_DEFAULT_MODEL_VALUE}
+            value={quickAgentPresetId ?? AGENT_DEFAULT_PRESET_VALUE}
             onValueChange={(value) =>
-              onQuickAgentModelChange?.(value === AGENT_DEFAULT_MODEL_VALUE ? null : value)
+              onQuickAgentPresetChange?.(value === AGENT_DEFAULT_PRESET_VALUE ? null : value)
             }
           >
             <SelectTrigger
               size="sm"
               className="h-8 w-full min-w-0 text-xs"
               aria-label={translate(
-                'components.newWorkspaceComposer.agentModelLabel',
-                'Agent model'
+                'components.newWorkspaceComposer.agentPresetLabel',
+                'Agent model and effort'
               )}
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={AGENT_DEFAULT_MODEL_VALUE}>
-                {translate('components.newWorkspaceComposer.defaultModel', 'Default model')}
+              <SelectItem value={AGENT_DEFAULT_PRESET_VALUE}>
+                {translate('components.newWorkspaceComposer.agentDefault', 'Agent default')}
               </SelectItem>
-              {quickAgentModelVariants.map((variant) => (
-                <SelectItem key={variant.modelId} value={variant.modelId}>
-                  {variant.label}
+              {quickAgentLaunchPresets.map((preset) => (
+                <SelectItem key={preset.id} value={preset.id}>
+                  {preset.label}
                 </SelectItem>
               ))}
             </SelectContent>
