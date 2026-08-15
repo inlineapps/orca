@@ -183,16 +183,16 @@ function QuickTabBody({
   const quickAgent = resolvedQuickAgentSelection.quickAgent
 
   // Why: a model pick belongs to the agent it was made for; switching agents must not carry it over.
-  const [quickAgentModelId, setQuickAgentModelId] = useState<string | null>(null)
+  const [quickAgentPresetId, setQuickAgentPresetId] = useState<string | null>(null)
 
   const handleQuickAgentChange = useCallback((agent: TuiAgent | null) => {
     setQuickAgentOverride(agent)
-    setQuickAgentModelId(null)
+    setQuickAgentPresetId(null)
   }, [])
 
   const handleCreate = useCallback(async (): Promise<void> => {
-    await submitQuick(quickAgent, quickAgentModelId)
-  }, [quickAgent, quickAgentModelId, submitQuick])
+    await submitQuick(quickAgent, quickAgentPresetId)
+  }, [quickAgent, quickAgentPresetId, submitQuick])
   // Why: Add Project layers over the composer as a nested dialog instead of
   // replacing it in the activeModal slot — closing the composer mid-flow (and
   // losing the typed name/prompt) was the old, abrupt behavior. Once opened it
@@ -322,8 +322,8 @@ function QuickTabBody({
         onComposerNodeChange={onComposerNodeChange}
         nameInputRef={nameInputRef}
         quickAgent={quickAgent}
-        quickAgentModelId={quickAgentModelId}
-        onQuickAgentModelChange={setQuickAgentModelId}
+        quickAgentPresetId={quickAgentPresetId}
+        onQuickAgentPresetChange={setQuickAgentPresetId}
         onQuickAgentChange={handleQuickAgentChange}
         {...cardProps}
         primaryActionLabel={primaryActionLabel}

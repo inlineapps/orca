@@ -11,7 +11,7 @@ import {
 } from '../../../shared/agent-session-resume'
 import { normalizeAiVaultResumeFilePath } from '../../../shared/ai-vault-resume-path'
 import { resolveTuiAgentLaunchEnv } from '../../../shared/tui-agent-launch-defaults'
-import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
+import { resolveTuiAgentLaunchArgsForPreset } from '../../../shared/agent-launch-preset'
 import { parseWslUncPath } from '../../../shared/wsl-paths'
 import type { AgentStartupShell } from '../../../shared/tui-agent-startup-shell'
 import { clearEnvCommand, commandSeparator } from '../../../shared/tui-agent-startup-shell'
@@ -60,7 +60,7 @@ type AiVaultResumeWorktreeArgs = {
   session: AiVaultResumeCommandSession
   commandOverride?: string | null
   /** Model preset the resumed session should start on; null keeps the agent's configured args. */
-  modelId?: string | null
+  presetId?: string | null
 }
 
 export function buildAiVaultResumeCopyCommandForWorktree(args: AiVaultResumeWorktreeArgs): string {
@@ -133,7 +133,7 @@ function buildAiVaultResumeForWorktree(
     !args.commandOverride?.trim() &&
     // Why: the host's prebuilt resume command cannot carry a model pick, so a
     // picked model has to go down the rebuild path like a command override does.
-    !args.modelId
+    !args.presetId
   ) {
     return {
       command: args.session.resumeCommand,
@@ -171,9 +171,9 @@ function buildAiVaultResumeForWorktree(
       },
       platform,
       shell: liveShell,
-      agentArgs: resolveTuiAgentLaunchArgsForModel({
+      agentArgs: resolveTuiAgentLaunchArgsForPreset({
         agent: args.session.agent,
-        modelId: args.modelId,
+        presetId: args.presetId,
         configuredArgs: args.state.settings?.agentDefaultArgs
       }),
       agentEnv: resolveTuiAgentLaunchEnv(args.session.agent, args.state.settings?.agentDefaultEnv),
