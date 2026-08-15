@@ -670,7 +670,7 @@ describe('ai vault resume command runtime', () => {
     ).toBe("codex 'resume' 'session one'")
   })
 
-  it('resumes on a picked model instead of the agent default args', () => {
+  it('resumes on a picked launch preset instead of the agent default args', () => {
     const state = makeState({ worktreePath: '/home/alice/repo' })
     state.settings = {
       ...state.settings,
@@ -687,12 +687,12 @@ describe('ai vault resume command runtime', () => {
           cwd: '/home/alice/repo',
           codexHome: null
         },
-        modelId: 'fable'
+        presetId: 'fable:high'
       })
-    ).toBe("claude '--verbose' '--model' 'fable' '--resume' 'session seven'")
+    ).toBe("claude '--verbose' '--model' 'fable' '--effort' 'high' '--resume' 'session seven'")
   })
 
-  it('rebuilds rather than reusing a remote prebuilt resume command when a model is picked', () => {
+  it('rebuilds rather than reusing a remote prebuilt resume command when a preset is picked', () => {
     const state = makeState({ worktreePath: '/home/alice/repo' })
 
     expect(
@@ -708,8 +708,8 @@ describe('ai vault resume command runtime', () => {
           executionHostPlatform: 'linux',
           resumeCommand: "claude --resume 'session seven'"
         },
-        modelId: 'opus'
+        presetId: 'opus:low'
       })
-    ).toBe("claude '--model' 'opus' '--resume' 'session seven'")
+    ).toBe("claude '--model' 'opus' '--effort' 'low' '--resume' 'session seven'")
   })
 })

@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { getAgentLaunchModelVariants } from '../../../shared/agent-launch-model-variant'
+import { getAgentLaunchPresets } from '../../../shared/agent-launch-preset'
 import { getAgentCatalog } from '@/lib/agent-catalog'
 import {
   DEFAULT_DISABLED_TUI_AGENTS,
@@ -81,7 +81,7 @@ const EMPTY_PROJECT_OPTIONS: NewWorkspaceProjectOption[] = []
 const EMPTY_PROJECT_HOST_SETUP_OPTIONS: ProjectHostSetupOption[] = []
 const EMPTY_EPHEMERAL_VM_RECIPES: EphemeralVmRecipeOption[] = []
 // Why: Radix Select forbids an empty item value, so "no model pick" needs a sentinel.
-const AGENT_DEFAULT_MODEL_VALUE = '__agent_default_model__'
+const AGENT_DEFAULT_PRESET_VALUE = '__agent_default_model__'
 
 type NewWorkspaceComposerCardProps = {
   contextualTourSource?: string
@@ -92,8 +92,8 @@ type NewWorkspaceComposerCardProps = {
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
   /** Model preset the picked agent launches on. null keeps the agent's configured default. */
-  quickAgentModelId: string | null
-  onQuickAgentModelChange: (modelId: string | null) => void
+  quickAgentPresetId: string | null
+  onQuickAgentPresetChange: (presetId: string | null) => void
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]
@@ -308,8 +308,8 @@ export default function NewWorkspaceComposerCard({
   nameInputRef,
   quickAgent,
   onQuickAgentChange,
-  quickAgentModelId,
-  onQuickAgentModelChange,
+  quickAgentPresetId,
+  onQuickAgentPresetChange,
   eligibleRepos,
   repoId,
   projectOptions = EMPTY_PROJECT_OPTIONS,
@@ -496,8 +496,8 @@ export default function NewWorkspaceComposerCard({
     )
   }, [detectedAgentIds, disabledTuiAgents])
 
-  const quickAgentModelVariants = React.useMemo(
-    () => (quickAgent ? getAgentLaunchModelVariants(quickAgent) : []),
+  const quickAgentLaunchPresets = React.useMemo(
+    () => (quickAgent ? getAgentLaunchPresets(quickAgent) : []),
     [quickAgent]
   )
 
@@ -924,30 +924,30 @@ export default function NewWorkspaceComposerCard({
             triggerClassName="h-9 w-full min-w-0 border-input text-sm focus:border-ring focus:ring-[3px] focus:ring-ring/50"
             onTriggerEnter={createDisabled ? undefined : onCreate}
           />
-          {quickAgentModelVariants.length > 0 ? (
+          {quickAgentLaunchPresets.length > 0 ? (
             <Select
-              value={quickAgentModelId ?? AGENT_DEFAULT_MODEL_VALUE}
+              value={quickAgentPresetId ?? AGENT_DEFAULT_PRESET_VALUE}
               onValueChange={(value) =>
-                onQuickAgentModelChange(value === AGENT_DEFAULT_MODEL_VALUE ? null : value)
+                onQuickAgentPresetChange(value === AGENT_DEFAULT_PRESET_VALUE ? null : value)
               }
             >
               <SelectTrigger
                 size="sm"
                 className="h-8 w-full min-w-0 text-xs"
                 aria-label={translate(
-                  'components.newWorkspaceComposer.agentModelLabel',
-                  'Agent model'
+                  'components.newWorkspaceComposer.agentPresetLabel',
+                  'Agent model and effort'
                 )}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={AGENT_DEFAULT_MODEL_VALUE}>
-                  {translate('components.newWorkspaceComposer.defaultModel', 'Default model')}
+                <SelectItem value={AGENT_DEFAULT_PRESET_VALUE}>
+                  {translate('components.newWorkspaceComposer.agentDefault', 'Agent default')}
                 </SelectItem>
-                {quickAgentModelVariants.map((variant) => (
-                  <SelectItem key={variant.modelId} value={variant.modelId}>
-                    {variant.label}
+                {quickAgentLaunchPresets.map((preset) => (
+                  <SelectItem key={preset.id} value={preset.id}>
+                    {preset.label}
                   </SelectItem>
                 ))}
               </SelectContent>

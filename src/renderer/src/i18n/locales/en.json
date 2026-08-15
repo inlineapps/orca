@@ -15657,8 +15657,8 @@
       "copyPrompt": "Copy prompt",
       "promptCopied": "Prompt copied",
       "copyPromptFailed": "Could not copy the prompt.",
-      "model": "Model",
-      "defaultModel": "Default model"
+      "preset": "Model & effort",
+      "agentDefault": "Agent default"
     },
     "status": {
       "bar": {
@@ -15669,16 +15669,16 @@
     },
     "tabBar": {
       "quickLaunch": {
-        "defaultModel": "Default model",
-        "launchAgentWithModel": "Launch {{value0}} on {{value1}} in a new terminal"
+        "agentDefault": "Agent default",
+        "launchAgentWithPreset": "Launch {{value0}} on {{value1}} in a new terminal"
       }
     },
     "newWorkspaceComposer": {
-      "agentModelLabel": "Agent model",
-      "defaultModel": "Default model"
+      "agentPresetLabel": "Agent model and effort",
+      "agentDefault": "Agent default"
     },
     "aiVault": {
-      "resumeOnModel": "Resume on Model"
+      "resumeOnPreset": "Resume on…"
     }
   },
   "dashboardPopout": {

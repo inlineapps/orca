@@ -29,7 +29,7 @@ import {
   resolveTuiAgentLaunchArgs,
   resolveTuiAgentLaunchEnv
 } from '../../../shared/tui-agent-launch-defaults'
-import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
+import { resolveTuiAgentLaunchArgsForPreset } from '../../../shared/agent-launch-preset'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { isGitRepoKind } from '../../../shared/repo-kind'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
@@ -404,7 +404,7 @@ export type UseComposerStateResult = {
   promptTextareaRef: React.RefObject<HTMLTextAreaElement | null>
   nameInputRef: React.RefObject<HTMLInputElement | null>
   submit: () => Promise<void>
-  submitQuick: (agent: TuiAgent | null, modelId?: string | null) => Promise<void>
+  submitQuick: (agent: TuiAgent | null, presetId?: string | null) => Promise<void>
   /** Invoked by the Enter handler to re-check whether submission should fire. */
   createDisabled: boolean
   /** Selects the repo a nested Add Project flow just added, clearing any folder-group target so the composer lands on it. */
@@ -3469,9 +3469,9 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
           autoRenameBranchFromWork: settings?.autoRenameBranchFromWork,
           agentCmdOverrides: settings?.agentCmdOverrides,
           agentArgs: agent
-            ? resolveTuiAgentLaunchArgsForModel({
+            ? resolveTuiAgentLaunchArgsForPreset({
                 agent,
-                modelId: requestedModelId,
+                presetId: requestedModelId,
                 configuredArgs: settings?.agentDefaultArgs
               })
             : undefined,
@@ -4383,9 +4383,9 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
                 agent,
                 draft: quickDraftPrompt,
                 cmdOverrides: settings?.agentCmdOverrides ?? {},
-                agentArgs: resolveTuiAgentLaunchArgsForModel({
+                agentArgs: resolveTuiAgentLaunchArgsForPreset({
                   agent,
-                  modelId: requestedModelId,
+                  presetId: requestedModelId,
                   configuredArgs: settings?.agentDefaultArgs
                 }),
                 agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
@@ -4416,9 +4416,9 @@ export function useComposerState(options: UseComposerStateOptions): UseComposerS
             agent,
             prompt: quickPrompt,
             cmdOverrides: settings?.agentCmdOverrides ?? {},
-            agentArgs: resolveTuiAgentLaunchArgsForModel({
+            agentArgs: resolveTuiAgentLaunchArgsForPreset({
               agent,
-              modelId: requestedModelId,
+              presetId: requestedModelId,
               configuredArgs: settings?.agentDefaultArgs
             }),
             agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
