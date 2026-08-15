@@ -1,7 +1,8 @@
 import { agentsOfferedForLaunch } from '@/lib/host-chat-program'
 import { worktreeLaunchWorkspace } from '@/lib/agent-launch-route-input'
-import { useEffect, useRef, useState } from 'react'
-import { Loader2, MessageSquarePlus } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Copy, Loader2, MessageSquarePlus } from 'lucide-react'
+import { toast } from 'sonner'
 import AgentCombobox from '@/components/agent/AgentCombobox'
 import { useAgentMenuObservation } from '@/components/tab-bar/use-new-tab-agent-menu-rows'
 import { useAgentDetectionTargetForWorktree } from '@/hooks/useAgentDetectionTarget'
@@ -76,6 +77,7 @@ export function AgentSessionContinuationDialog({
   const contextMode = contextPick?.request === request ? contextPick.mode : 'focused'
   const [starting, setStarting] = useState(false)
   const [showStarting, setShowStarting] = useState(false)
+  const [promptCopied, setPromptCopied] = useState(false)
   const disabledAgents = settings?.disabledTuiAgents ?? EMPTY_DISABLED_AGENTS
 
   const observation = useAgentMenuObservation(
@@ -98,6 +100,10 @@ export function AgentSessionContinuationDialog({
     .map((agent) => agent.id)
     .filter((agent) => rows.some((row) => row.agent === agent && row.kind !== 'chat-unavailable'))
   const hasFullContext = request ? hasFullAgentSessionContext(request.source) : false
+  const continuationPrompt = useMemo(
+    () => (request ? buildAgentSessionContinuationPrompt(request.source, contextMode) : null),
+    [contextMode, request]
+  )
 
   useEffect(() => {
     const abort = open && request ? new AbortController() : null
@@ -126,18 +132,46 @@ export function AgentSessionContinuationDialog({
     return () => window.clearTimeout(timer)
   }, [starting])
 
+  // Why: the badge confirms what was copied, so a mode switch or a new request must clear it.
+  useEffect(() => setPromptCopied(false), [continuationPrompt])
+
+  useEffect(() => {
+    if (!promptCopied) {
+      return
+    }
+    const timer = window.setTimeout(() => setPromptCopied(false), 1500)
+    return () => window.clearTimeout(timer)
+  }, [promptCopied])
+
+  const handleCopyPrompt = async (): Promise<void> => {
+    if (!continuationPrompt) {
+      return
+    }
+    try {
+      await window.api.ui.writeClipboardText(continuationPrompt)
+      setPromptCopied(true)
+    } catch (error) {
+      console.error('Could not copy the continuation prompt', error)
+      toast.error(
+        translate(
+          'components.agentSessionContinuation.copyPromptFailed',
+          'Could not copy the session prompt.'
+        )
+      )
+    }
+  }
+
   const handleStart = async (): Promise<void> => {
     if (!request || !selectedAgent || starting || !selection.ready) {
       return
     }
-    const prompt = buildAgentSessionContinuationPrompt(request.source, contextMode)
-    if (!prompt) {
+    if (!continuationPrompt) {
       return
     }
     setStarting(true)
     const launched = await launchAgentSessionContinuation({
       agent: selectedAgent,
-      prompt,
+      prompt: continuationPrompt,
       worktreeId: request.worktreeId,
       groupId: request.groupId,
       initialCwd: request.initialCwd,
@@ -298,6 +332,18 @@ export function AgentSessionContinuationDialog({
         </div>
 
         <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            className="sm:mr-auto"
+            disabled={!continuationPrompt || starting}
+            onClick={() => void handleCopyPrompt()}
+          >
+            {promptCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            {promptCopied
+              ? translate('components.agentSessionContinuation.promptCopied', 'Prompt copied')
+              : translate('components.agentSessionContinuation.copyPrompt', 'Copy prompt')}
+          </Button>
           <Button
             type="button"
             variant="ghost"

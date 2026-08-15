@@ -12,8 +12,11 @@ import { AgentSessionContinuationDialog } from './AgentSessionContinuationDialog
 
 const mocks = vi.hoisted(() => ({
   detection: vi.fn<() => UseDetectedAgentsResult>(),
-  launch: vi.fn()
+  launch: vi.fn(),
+  writeClipboardText: vi.fn(),
+  toastError: vi.fn()
 }))
+vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
 vi.mock('@/hooks/useDetectedAgents', () => ({ useDetectedAgents: mocks.detection }))
 vi.mock('@/hooks/useAgentDetectionTarget', () => ({
   useAgentDetectionTargetForWorktree: () => ({ kind: 'local' })
@@ -42,6 +45,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.detection.mockReturnValue(detection)
   mocks.launch.mockResolvedValue(true)
+  mocks.writeClipboardText.mockResolvedValue(undefined)
+  vi.stubGlobal('api', { ui: { writeClipboardText: mocks.writeClipboardText } })
   setLocalRuntimeCapabilitiesForTests([CHAT])
   useAppStore.setState({
     settings: { ...getDefaultSettings('/test'), experimentalNativeChat: true },
@@ -100,4 +105,31 @@ it('clears failed detection, gates unresolved Start, and submits the displayed r
     initialCwd: '/repo/packages/app',
     launchChoice: { route: 'terminal-tui', requestedSurface: 'terminal' }
   })
+})
+
+it('copies the handoff prompt', async () => {
+  const captured = { ...request.source, capturedText: 'user: rerun the seeding script' }
+  render(
+    <AgentSessionContinuationDialog
+      open
+      request={{ ...request, source: captured }}
+      onOpenChange={vi.fn()}
+    />,
+    { wrapper: TooltipProvider }
+  )
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: /Copy prompt/ })))
+  expect(mocks.writeClipboardText.mock.calls[0][0]).toContain('user: rerun the seeding script')
+  expect(await screen.findByText(/Prompt copied/)).toBeTruthy()
+})
+
+it('reports a clipboard failure instead of claiming the prompt was copied', async () => {
+  mocks.writeClipboardText.mockRejectedValue(new Error('clipboard unavailable'))
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  render(<AgentSessionContinuationDialog open request={request} onOpenChange={vi.fn()} />, {
+    wrapper: TooltipProvider
+  })
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: /Copy prompt/ })))
+  expect(mocks.toastError).toHaveBeenCalledOnce()
+  expect(screen.queryByText(/Prompt copied/)).toBeNull()
+  consoleError.mockRestore()
 })
