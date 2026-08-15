@@ -35,7 +35,7 @@ import {
   resolveFolderWorkspaceLaunchDraft,
   submitFolderWorkspaceCreate
 } from '@/components/sidebar/folder-workspace-composer-submit'
-import { resolveTuiAgentLaunchArgsForModel } from '../../../../shared/agent-launch-model-variant'
+import { resolveTuiAgentLaunchArgsForPreset } from '../../../../shared/agent-launch-preset'
 import { resolveTuiAgentLaunchEnv } from '../../../../shared/tui-agent-launch-defaults'
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import { isNativeChatTranscriptLocalReadable } from '@/lib/native-chat-transcript-readability'
@@ -75,7 +75,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
   const { canResolveFolderSmartGitHubSubmit } = decisions
 
   const submitFolderTarget = useCallback(
-    async (requestedAgent: TuiAgent | null, requestedModelId?: string | null): Promise<void> => {
+    async (requestedAgent: TuiAgent | null, requestedPresetId?: string | null): Promise<void> => {
       if (!selectedProjectGroup?.parentPath || folderCreateDisabled) {
         return
       }
@@ -120,9 +120,9 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
           autoRenameBranchFromWork: settings?.autoRenameBranchFromWork,
           agentCmdOverrides: settings?.agentCmdOverrides,
           agentArgs: agent
-            ? resolveTuiAgentLaunchArgsForModel({
+            ? resolveTuiAgentLaunchArgsForPreset({
                 agent,
-                modelId: requestedModelId,
+                presetId: requestedPresetId,
                 configuredArgs: settings?.agentDefaultArgs
               })
             : undefined,

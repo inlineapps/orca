@@ -6,7 +6,7 @@ import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { useAppStore } from '@/store'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
-import { resolveTuiAgentLaunchArgsForModel } from '../../../shared/agent-launch-model-variant'
+import { resolveTuiAgentLaunchArgsForPreset } from '../../../shared/agent-launch-preset'
 import type { LaunchSource } from '../../../shared/telemetry-events'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { translate } from '@/i18n/i18n'
@@ -14,7 +14,7 @@ import { translate } from '@/i18n/i18n'
 type LaunchAgentSessionContinuationArgs = {
   agent: TuiAgent
   /** Model preset the new session starts on; omitted keeps the agent's configured args. */
-  modelId?: string | null
+  presetId?: string | null
   prompt: string
   worktreeId: string
   groupId?: string | null
@@ -73,7 +73,7 @@ async function ensureAgentAvailable(agent: TuiAgent, worktreeId: string): Promis
 
 export async function launchAgentSessionContinuation({
   agent,
-  modelId,
+  presetId,
   prompt,
   worktreeId,
   groupId,
@@ -93,11 +93,11 @@ export async function launchAgentSessionContinuation({
     agent,
     worktreeId,
     ...(groupId ? { groupId } : {}),
-    ...(modelId
+    ...(presetId
       ? {
-          agentArgs: resolveTuiAgentLaunchArgsForModel({
+          agentArgs: resolveTuiAgentLaunchArgsForPreset({
             agent,
-            modelId,
+            presetId,
             configuredArgs: useAppStore.getState().settings?.agentDefaultArgs
           })
         }

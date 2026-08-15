@@ -1,5 +1,5 @@
 import type { AgentStatusState } from '../../../../shared/agent-status-types'
-import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
+import { getAgentLaunchPresets } from '../../../../shared/agent-launch-preset'
 import type { AiVaultScope, AiVaultSession } from '../../../../shared/ai-vault-types'
 import type { AiVaultResumeStartup } from '@/lib/ai-vault-resume-command'
 import { cn } from '@/lib/utils'
@@ -79,7 +79,7 @@ export function AiVaultVirtualRow({
   onToggleSessionDetails: (sessionId: string) => void
   onJumpToOriginalPane: (session: AiVaultSession) => void
   onJumpToWorktree: (worktreeId: string) => void
-  onResume: (session: AiVaultSession, worktreeId: string, modelId?: string | null) => void
+  onResume: (session: AiVaultSession, worktreeId: string, presetId?: string | null) => void
   onContinueInNewSession: (session: AiVaultSession, worktreeId: string) => void
   onResumeInNewChat: (session: AiVaultSession, worktreeId: string) => void
   onCopyResume: (session: AiVaultSession, worktreeId?: string | null) => void
@@ -169,10 +169,10 @@ export function AiVaultVirtualRow({
           }
           showJumpToWorktree={showJumpToWorktree}
           onJumpToWorktree={worktreeJumpId ? () => onJumpToWorktree(worktreeJumpId) : undefined}
-          resumeModelVariants={getAgentLaunchModelVariants(row.session.agent)}
-          onResumeWithModel={
+          resumeLaunchPresets={getAgentLaunchPresets(row.session.agent)}
+          onResumeWithPreset={
             resumeWorktreeId
-              ? (modelId) => onResume(row.session, resumeWorktreeId, modelId)
+              ? (presetId) => onResume(row.session, resumeWorktreeId, presetId)
               : undefined
           }
           onResume={() => {

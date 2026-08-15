@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { AiVaultSession } from '../../../../shared/ai-vault-types'
-import type { AgentLaunchModelVariant } from '../../../../shared/agent-launch-model-variant'
+import type { AgentLaunchPreset } from '../../../../shared/agent-launch-preset'
 import { agentLabel } from './ai-vault-session-filters'
 import { translate } from '@/i18n/i18n'
 import { SessionActionMenuItems } from './AiVaultSessionActionMenuItems'
@@ -53,8 +53,8 @@ export function SessionRowTrailingActions({
   showJumpToWorktree,
   onJumpToWorktree,
   onResume,
-  resumeModelVariants,
-  onResumeWithModel,
+  resumeLaunchPresets,
+  onResumeWithPreset,
   onContinueInNewSession,
   onResumeInNewChat,
   onCopyResume,
@@ -78,8 +78,8 @@ export function SessionRowTrailingActions({
   showJumpToWorktree: boolean
   onJumpToWorktree?: () => void
   onResume: () => void
-  resumeModelVariants?: readonly AgentLaunchModelVariant[]
-  onResumeWithModel?: (modelId: string) => void
+  resumeLaunchPresets?: readonly AgentLaunchPreset[]
+  onResumeWithPreset?: (presetId: string) => void
   onContinueInNewSession?: () => void
   /** Passed through to the overflow menu only; the resting row keeps its two-icon budget. */
   onResumeInNewChat?: () => void
@@ -263,8 +263,8 @@ export function SessionRowTrailingActions({
             resumeDisabled={resumeDisabled}
             resumeLabel={resumeLabel}
             onResume={onResume}
-            resumeModelVariants={resumeModelVariants}
-            onResumeWithModel={onResumeWithModel}
+            resumeLaunchPresets={resumeLaunchPresets}
+            onResumeWithPreset={onResumeWithPreset}
             onContinueInNewSession={onContinueInNewSession}
             onResumeInNewChat={onResumeInNewChat}
             onJumpToOriginalPane={onJumpToOriginalPane}

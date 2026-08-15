@@ -16,7 +16,7 @@ import { SessionActionMenuItems } from './AiVaultSessionActionMenuItems'
 import { SessionRowTrailingActions } from './SessionRowTrailingActions'
 import { aiVaultSessionDeleteBlockedReason } from './ai-vault-session-deletability'
 import type { AiVaultSessionResumeActions } from './ai-vault-session-resume'
-import type { AgentLaunchModelVariant } from '../../../../shared/agent-launch-model-variant'
+import type { AgentLaunchPreset } from '../../../../shared/agent-launch-preset'
 import type { AiVaultSessionWorktreeInfo } from './ai-vault-session-worktree'
 import {
   conversationRoleLabel,
@@ -39,8 +39,8 @@ export function VaultSessionRow({
   showJumpToWorktree,
   onJumpToWorktree,
   onResume,
-  resumeModelVariants,
-  onResumeWithModel,
+  resumeLaunchPresets,
+  onResumeWithPreset,
   onContinueInNewSession,
   onResumeInNewChat,
   resumeLabel,
@@ -68,8 +68,8 @@ export function VaultSessionRow({
   showJumpToWorktree: boolean
   onJumpToWorktree?: () => void
   onResume: () => void
-  resumeModelVariants?: readonly AgentLaunchModelVariant[]
-  onResumeWithModel?: (modelId: string) => void
+  resumeLaunchPresets?: readonly AgentLaunchPreset[]
+  onResumeWithPreset?: (presetId: string) => void
   onContinueInNewSession?: () => void
   onResumeInNewChat?: () => void
   resumeLabel: string
@@ -179,8 +179,8 @@ export function VaultSessionRow({
               showJumpToWorktree={showJumpToWorktree}
               onJumpToWorktree={onJumpToWorktree}
               onResume={onResume}
-              resumeModelVariants={resumeModelVariants}
-              onResumeWithModel={onResumeWithModel}
+              resumeLaunchPresets={resumeLaunchPresets}
+              onResumeWithPreset={onResumeWithPreset}
               onContinueInNewSession={onContinueInNewSession}
               onResumeInNewChat={onResumeInNewChat}
               onCopyResume={onCopyResume}
@@ -242,8 +242,8 @@ export function VaultSessionRow({
           showJumpToWorktree={showJumpToWorktree}
           onJumpToWorktree={onJumpToWorktree}
           onResume={onResume}
-          resumeModelVariants={resumeModelVariants}
-          onResumeWithModel={onResumeWithModel}
+          resumeLaunchPresets={resumeLaunchPresets}
+          onResumeWithPreset={onResumeWithPreset}
           onContinueInNewSession={onContinueInNewSession}
           onResumeInNewChat={onResumeInNewChat}
           onCopyResume={onCopyResume}

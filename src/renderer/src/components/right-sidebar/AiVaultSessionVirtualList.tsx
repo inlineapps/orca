@@ -73,7 +73,7 @@ export function AiVaultSessionVirtualList({
   onToggleGroup: (key: string) => void
   onJumpToOriginalPane: (session: AiVaultSession) => void
   onJumpToWorktree: (worktreeId: string) => void
-  onResume: (session: AiVaultSession, worktreeId: string, modelId?: string | null) => void
+  onResume: (session: AiVaultSession, worktreeId: string, presetId?: string | null) => void
   onContinueInNewSession: (session: AiVaultSession, worktreeId: string) => void
   onResumeInNewChat: (session: AiVaultSession, worktreeId: string) => void
   onCopyResume: (session: AiVaultSession, worktreeId?: string | null) => void
