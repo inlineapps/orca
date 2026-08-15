@@ -1,4 +1,5 @@
 import type { AgentStatusState } from '../../../../shared/agent-status-types'
+import { getAgentLaunchModelVariants } from '../../../../shared/agent-launch-model-variant'
 import type { AiVaultScope, AiVaultSession } from '../../../../shared/ai-vault-types'
 import type { AiVaultResumeStartup } from '@/lib/ai-vault-resume-command'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,7 @@ export function AiVaultVirtualRow({
   onToggleSessionDetails: (sessionId: string) => void
   onJumpToOriginalPane: (session: AiVaultSession) => void
   onJumpToWorktree: (worktreeId: string) => void
-  onResume: (session: AiVaultSession, worktreeId: string) => void
+  onResume: (session: AiVaultSession, worktreeId: string, modelId?: string | null) => void
   onContinueInNewSession: (session: AiVaultSession, worktreeId: string) => void
   onResumeInNewChat: (session: AiVaultSession, worktreeId: string) => void
   onCopyResume: (session: AiVaultSession, worktreeId?: string | null) => void
@@ -118,6 +119,7 @@ export function AiVaultVirtualRow({
       ? aiVaultSessionRowResumeGating(row.session, resumeState)
       : { resumeDisabled: true, canCopyResumeCommand: false }
   const resumeLabel = resumeState ? aiVaultSessionResumeLabel(resumeState) : ''
+  const resumeWorktreeId = resumeState?.worktreeId ?? null
   const canOpenLocalSessionPaths =
     row.type === 'session' && canUseLocalAiVaultSessionPathActions(row.session.executionHostId)
   // Why: in-Orca View Log additionally withholds synthetic (SQLite/OpenCode)
@@ -167,6 +169,12 @@ export function AiVaultVirtualRow({
           }
           showJumpToWorktree={showJumpToWorktree}
           onJumpToWorktree={worktreeJumpId ? () => onJumpToWorktree(worktreeJumpId) : undefined}
+          resumeModelVariants={getAgentLaunchModelVariants(row.session.agent)}
+          onResumeWithModel={
+            resumeWorktreeId
+              ? (modelId) => onResume(row.session, resumeWorktreeId, modelId)
+              : undefined
+          }
           onResume={() => {
             if (resumeState?.worktreeId) {
               onResume(row.session, resumeState.worktreeId)

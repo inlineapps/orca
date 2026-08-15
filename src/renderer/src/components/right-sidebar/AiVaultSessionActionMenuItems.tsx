@@ -9,16 +9,33 @@ import {
   Play,
   Trash2
 } from 'lucide-react'
-import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
-import { ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu'
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger
+} from '@/components/ui/context-menu'
+import type { AgentLaunchModelVariant } from '../../../../shared/agent-launch-model-variant'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+
+const NO_MODEL_VARIANTS: readonly AgentLaunchModelVariant[] = []
 
 export function SessionActionMenuItems({
   menuKind = 'dropdown',
   resumeDisabled,
   resumeLabel,
   onResume,
+  resumeModelVariants = NO_MODEL_VARIANTS,
+  onResumeWithModel,
   onContinueInNewSession,
   onResumeInNewChat,
   onJumpToOriginalPane,
@@ -37,6 +54,9 @@ export function SessionActionMenuItems({
   resumeDisabled: boolean
   resumeLabel: string
   onResume: () => void
+  /** Model presets the session's agent can be resumed on; empty hides the submenu. */
+  resumeModelVariants?: readonly AgentLaunchModelVariant[]
+  onResumeWithModel?: (modelId: string) => void
   onContinueInNewSession?: () => void
   onResumeInNewChat?: () => void
   onJumpToOriginalPane?: () => void
@@ -56,6 +76,9 @@ export function SessionActionMenuItems({
 }) {
   const Item = menuKind === 'context' ? ContextMenuItem : DropdownMenuItem
   const Separator = menuKind === 'context' ? ContextMenuSeparator : DropdownMenuSeparator
+  const Sub = menuKind === 'context' ? ContextMenuSub : DropdownMenuSub
+  const SubTrigger = menuKind === 'context' ? ContextMenuSubTrigger : DropdownMenuSubTrigger
+  const SubContent = menuKind === 'context' ? ContextMenuSubContent : DropdownMenuSubContent
   const hasLocalPathActions = Boolean(onOpenLog || onRevealLog || onOpenCwd)
   const deleteLabel = translate('auto.components.right.sidebar.AiVaultSessionRow.delete', 'Delete')
   const deleteItem = (
@@ -104,6 +127,21 @@ export function SessionActionMenuItems({
             'Resume in New Chat'
           )}
         </Item>
+      ) : null}
+      {onResumeWithModel && resumeModelVariants.length > 0 ? (
+        <Sub>
+          <SubTrigger disabled={resumeDisabled}>
+            <Play className="size-3.5" />
+            {translate('components.aiVault.resumeOnModel', 'Resume on Model')}
+          </SubTrigger>
+          <SubContent>
+            {resumeModelVariants.map((variant) => (
+              <Item key={variant.modelId} onSelect={() => onResumeWithModel(variant.modelId)}>
+                {variant.label}
+              </Item>
+            ))}
+          </SubContent>
+        </Sub>
       ) : null}
       {onContinueInNewSession ? (
         <Item onSelect={onContinueInNewSession}>
