@@ -15,9 +15,9 @@ import { useDetectedAgents } from '@/hooks/useDetectedAgents'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import {
-  getAgentLaunchModelVariants,
-  resolveTuiAgentLaunchArgsForModel
-} from '../../../../shared/agent-launch-model-variant'
+  getAgentLaunchPresets,
+  resolveTuiAgentLaunchArgsForPreset
+} from '../../../../shared/agent-launch-preset'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
 import {
@@ -133,18 +133,18 @@ function QuickLaunchAgentMenuItemsInner({
   }, [openSettingsPage, openSettingsTarget])
 
   const runLaunch = useCallback(
-    (agent: TuiAgent, modelId?: string) => {
+    (agent: TuiAgent, presetId?: string) => {
       const entry = getCatalogEntry(agent)
       const label = entry?.label ?? agent
       const result = launchAgentInNewTab({
         agent,
         worktreeId,
         groupId,
-        ...(modelId
+        ...(presetId
           ? {
-              agentArgs: resolveTuiAgentLaunchArgsForModel({
+              agentArgs: resolveTuiAgentLaunchArgsForPreset({
                 agent,
-                modelId,
+                presetId,
                 configuredArgs: useAppStore.getState().settings?.agentDefaultArgs
               })
             }
@@ -218,8 +218,8 @@ function QuickLaunchAgentMenuItemsInner({
         const label = entry?.label ?? agent
         const showsDefaultAgentShortcut =
           newAgentShortcut !== null && defaultAgent !== 'blank' && agent === defaultAgent
-        const modelVariants = getAgentLaunchModelVariants(agent)
-        if (modelVariants.length > 0) {
+        const launchPresets = getAgentLaunchPresets(agent)
+        if (launchPresets.length > 0) {
           return (
             <DropdownMenuSub key={agent}>
               {/* Why: the trigger keeps the plain agent row's label, title, and shortcut so
@@ -243,20 +243,20 @@ function QuickLaunchAgentMenuItemsInner({
                   onSelect={() => runLaunch(agent)}
                   className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
                 >
-                  {translate('components.tabBar.quickLaunch.defaultModel', 'Default model')}
+                  {translate('components.tabBar.quickLaunch.agentDefault', 'Agent default')}
                 </DropdownMenuItem>
-                {modelVariants.map((variant) => (
+                {launchPresets.map((preset) => (
                   <DropdownMenuItem
-                    key={variant.modelId}
-                    onSelect={() => runLaunch(agent, variant.modelId)}
+                    key={preset.id}
+                    onSelect={() => runLaunch(agent, preset.id)}
                     className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
                     title={translate(
-                      'components.tabBar.quickLaunch.launchAgentWithModel',
+                      'components.tabBar.quickLaunch.launchAgentWithPreset',
                       'Launch {{value0}} on {{value1}} in a new terminal',
-                      { value0: label, value1: variant.label }
+                      { value0: label, value1: preset.label }
                     )}
                   >
-                    {variant.label}
+                    {preset.label}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuSubContent>
