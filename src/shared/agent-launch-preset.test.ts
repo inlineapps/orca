@@ -12,9 +12,28 @@ describe('getAgentLaunchPresets', () => {
   })
 
   it('offers nothing for agents outside the curated set', () => {
-    expect(getAgentLaunchPresets('codex')).toEqual([])
     expect(getAgentLaunchPresets('gemini')).toEqual([])
     expect(getAgentLaunchPresets('aider')).toEqual([])
+  })
+
+  it('offers the curated Codex model/effort pairs', () => {
+    expect(getAgentLaunchPresets('codex')).toEqual([
+      {
+        id: 'gpt-5.6-luna:high',
+        agent: 'codex',
+        modelId: 'gpt-5.6-luna',
+        effort: 'high',
+        label: 'GPT-5.6 Luna · High'
+      },
+      {
+        id: 'gpt-5.6-sol:high',
+        agent: 'codex',
+        modelId: 'gpt-5.6-sol',
+        effort: 'high',
+        label: 'GPT-5.6 Sol · High'
+      },
+      { id: 'gpt-6:high', agent: 'codex', modelId: 'gpt-6', effort: 'high', label: 'GPT-6 · High' }
+    ])
   })
 })
 
@@ -71,5 +90,15 @@ describe('resolveTuiAgentLaunchArgsForPreset', () => {
         configuredArgs: { codex: '--search' }
       })
     ).toBe('--search')
+  })
+
+  it('resolves a Codex preset with model and reasoning effort flags', () => {
+    expect(
+      resolveTuiAgentLaunchArgsForPreset({
+        agent: 'codex',
+        presetId: 'gpt-5.6-sol:high',
+        configuredArgs: { codex: '--profile review -m gpt-5.5 -c model_reasoning_effort=low' }
+      })
+    ).toBe('--profile review -m gpt-5.6-sol -c model_reasoning_effort=high')
   })
 })
