@@ -19,7 +19,8 @@ export type AgentLaunchPreset = {
  *  is far more than anyone launches by hand. Curate the pairs worth one click and
  *  leave the rest to Agent settings. */
 const CURATED_LAUNCH_PRESETS: Partial<Record<TuiAgent, { models: string[]; efforts: string[] }>> = {
-  claude: { models: ['opus', 'fable'], efforts: ['low', 'high'] }
+  claude: { models: ['opus', 'fable'], efforts: ['low', 'high'] },
+  codex: { models: ['gpt-5.6-luna', 'gpt-5.6-sol', 'gpt-6'], efforts: ['high'] }
 }
 
 function presetId(modelId: string, effort: string): string {
