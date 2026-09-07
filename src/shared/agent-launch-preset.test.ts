@@ -32,7 +32,13 @@ describe('getAgentLaunchPresets', () => {
         effort: 'high',
         label: 'GPT-5.6 Sol · High'
       },
-      { id: 'gpt-6:high', agent: 'codex', modelId: 'gpt-6', effort: 'high', label: 'GPT-6 · High' }
+      {
+        id: 'gpt-6-astra:high',
+        agent: 'codex',
+        modelId: 'gpt-6-astra',
+        effort: 'high',
+        label: 'GPT-6 Astra · High'
+      }
     ])
   })
 })
@@ -92,13 +98,16 @@ describe('resolveTuiAgentLaunchArgsForPreset', () => {
     ).toBe('--search')
   })
 
-  it('resolves a Codex preset with model and reasoning effort flags', () => {
-    expect(
-      resolveTuiAgentLaunchArgsForPreset({
-        agent: 'codex',
-        presetId: 'gpt-5.6-sol:high',
-        configuredArgs: { codex: '--profile review -m gpt-5.5 -c model_reasoning_effort=low' }
-      })
-    ).toBe('--profile review -m gpt-5.6-sol -c model_reasoning_effort=high')
-  })
+  it.each(['gpt-5.6-sol', 'gpt-6-astra'])(
+    'resolves %s with model and reasoning effort flags',
+    (modelId) => {
+      expect(
+        resolveTuiAgentLaunchArgsForPreset({
+          agent: 'codex',
+          presetId: `${modelId}:high`,
+          configuredArgs: { codex: '--profile review -m gpt-5.5 -c model_reasoning_effort=low' }
+        })
+      ).toBe(`--profile review -m ${modelId} -c model_reasoning_effort=high`)
+    }
+  )
 })
