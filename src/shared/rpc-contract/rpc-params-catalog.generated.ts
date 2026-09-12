@@ -37,6 +37,17 @@ import {
 } from './ai-vault-params'
 import { ArtifactsDeleteParams, ListOptions, SourceRequest, WriteRequest } from './artifacts-params'
 import {
+  Connect,
+  GetTask,
+  ListAssignedTasks,
+  ListProjectTasks,
+  ListSections,
+  ListSubtasks,
+  SearchTasks,
+  SelectWorkspace,
+  WorkspaceSelection
+} from './asana-params'
+import {
   AutomationCreate,
   AutomationId,
   AutomationList,
@@ -282,7 +293,7 @@ import {
 } from './hosted-review-params'
 import {
   AssignableUsers,
-  Connect,
+  Connect as ConnectOfJiraParams,
   CreateIssue as CreateIssueOfJiraParams,
   IssueComment as IssueCommentOfJiraParams,
   IssueKey,
@@ -330,9 +341,9 @@ import {
   ProjectId,
   ProjectIssues,
   SearchIssues as SearchIssuesOfLinearParams,
-  SelectWorkspace,
+  SelectWorkspace as SelectWorkspaceOfLinearParams,
   TeamId,
-  WorkspaceSelection
+  WorkspaceSelection as WorkspaceSelectionOfLinearParams
 } from './linear-params'
 import { CreateProject } from './linear-project-create-params'
 import { NativeChatSession, NativeChatUnsubscribe } from './native-chat-params'
@@ -584,6 +595,20 @@ export const RPC_PARAMS_BY_METHOD = {
   'artifacts.share': WriteRequest,
   'artifacts.unshare': SourceRequest,
   'artifacts.update': WriteRequest,
+  'asana.connect': Connect,
+  'asana.disconnect': null,
+  'asana.getTask': GetTask,
+  'asana.listAssignedTasks': ListAssignedTasks,
+  'asana.listProjectTasks': ListProjectTasks,
+  'asana.listProjects': WorkspaceSelection,
+  'asana.listSections': ListSections,
+  'asana.listSubtasks': ListSubtasks,
+  'asana.readStatus': null,
+  'asana.refreshProjects': WorkspaceSelection,
+  'asana.searchTasks': SearchTasks,
+  'asana.selectWorkspace': SelectWorkspace,
+  'asana.status': null,
+  'asana.testConnection': null,
   'automation.create': AutomationCreate,
   'automation.delete': AutomationId,
   'automation.list': AutomationList,
@@ -870,7 +895,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'hostedReview.forBranch': HostedReviewForBranch,
   'hostedReview.getCreationEligibility': HostedReviewCreationEligibility,
   'jira.addIssueComment': IssueCommentOfJiraParams,
-  'jira.connect': Connect,
+  'jira.connect': ConnectOfJiraParams,
   'jira.createIssue': CreateIssueOfJiraParams,
   'jira.disconnect': SiteSelection,
   'jira.getIssue': IssueKey,
@@ -904,7 +929,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'linear.connect': ConnectOfLinearParams,
   'linear.createIssue': CreateIssueOfLinearParams,
   'linear.createProject': CreateProject,
-  'linear.disconnect': WorkspaceSelection,
+  'linear.disconnect': WorkspaceSelectionOfLinearParams,
   'linear.getCustomView': CustomViewId,
   'linear.getIssue': IssueId,
   'linear.getProject': ProjectId,
@@ -922,17 +947,17 @@ export const RPC_PARAMS_BY_METHOD = {
   'linear.listIssues': ListIssuesOfLinearIssueListParams,
   'linear.listProjectIssues': ProjectIssues,
   'linear.listProjects': ListProjects,
-  'linear.listTeams': WorkspaceSelection,
+  'linear.listTeams': WorkspaceSelectionOfLinearParams,
   'linear.mcpListIssues': McpListIssues,
   'linear.resolveCurrentIssue': LinearCurrentContext,
   'linear.saveIssue': LinearSaveIssue,
   'linear.searchIssues': SearchIssuesOfLinearParams,
-  'linear.selectWorkspace': SelectWorkspace,
+  'linear.selectWorkspace': SelectWorkspaceOfLinearParams,
   'linear.status': null,
   'linear.teamLabels': TeamId,
   'linear.teamMembers': TeamId,
   'linear.teamStates': TeamId,
-  'linear.testConnection': WorkspaceSelection,
+  'linear.testConnection': WorkspaceSelectionOfLinearParams,
   'linear.updateIssue': IssueUpdateOfLinearParams,
   'markdown.readTab': ActivateTab,
   'markdown.saveTab': SaveMarkdownTab,
