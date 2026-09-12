@@ -267,11 +267,15 @@ describe('AgentSessionContinuationDialog', () => {
   })
 
   it('offers no preset field for an agent outside the curated set', async () => {
-    mocks.detectAgents.mockResolvedValue(['codex'])
+    mocks.detectAgents.mockResolvedValue(['gemini'])
 
     await act(async () => {
       root.render(
-        <AgentSessionContinuationDialog open request={request('wt-13')} onOpenChange={vi.fn()} />
+        <AgentSessionContinuationDialog
+          open
+          request={request('wt-13', { sourceAgent: 'gemini' })}
+          onOpenChange={vi.fn()}
+        />
       )
     })
 

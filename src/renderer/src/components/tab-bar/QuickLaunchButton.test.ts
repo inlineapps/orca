@@ -145,7 +145,7 @@ describe('QuickLaunchAgentMenuItems', () => {
     expect(rowMarkup(html, 'Gemini')).not.toContain('⌘⌥T')
   })
 
-  it('offers the curated Claude presets and leaves other agents a plain row', () => {
+  it('offers curated Claude and Codex presets and leaves other agents a plain row', () => {
     const html = renderAgentMenuItems()
 
     expect(html).toContain('title="Launch Claude in a new terminal"')
@@ -153,9 +153,9 @@ describe('QuickLaunchAgentMenuItems', () => {
     expect(html).toContain('title="Launch Claude on Opus · High in a new terminal"')
     expect(html).toContain('title="Launch Claude on Fable · Low in a new terminal"')
     expect(html).toContain('title="Launch Claude on Fable · High in a new terminal"')
-    // Only Claude is curated, so only Claude grows the extra "agent default" row.
-    expect(html.match(/>Agent default</g) ?? []).toHaveLength(1)
-    expect(html).not.toContain('Launch Codex on')
+    expect(html).toContain('title="Launch Codex on GPT-6 Astra · High in a new terminal"')
+    expect(html).toContain('title="Launch Codex on GPT-5.6 Luna · Low in a new terminal"')
+    expect(html.match(/>Agent default</g) ?? []).toHaveLength(2)
     expect(html).not.toContain('Launch Gemini on')
   })
 
