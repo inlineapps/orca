@@ -19,48 +19,6 @@ describe('getAgentLaunchPresets', () => {
   it('offers the curated Codex model/effort pairs', () => {
     expect(getAgentLaunchPresets('codex')).toEqual([
       {
-        id: 'gpt-5.6-luna:high',
-        agent: 'codex',
-        modelId: 'gpt-5.6-luna',
-        effort: 'high',
-        label: 'GPT-5.6 Luna · High'
-      },
-      {
-        id: 'gpt-5.6-luna:medium',
-        agent: 'codex',
-        modelId: 'gpt-5.6-luna',
-        effort: 'medium',
-        label: 'GPT-5.6 Luna · Medium'
-      },
-      {
-        id: 'gpt-5.6-luna:low',
-        agent: 'codex',
-        modelId: 'gpt-5.6-luna',
-        effort: 'low',
-        label: 'GPT-5.6 Luna · Low'
-      },
-      {
-        id: 'gpt-5.6-sol:high',
-        agent: 'codex',
-        modelId: 'gpt-5.6-sol',
-        effort: 'high',
-        label: 'GPT-5.6 Sol · High'
-      },
-      {
-        id: 'gpt-5.6-sol:medium',
-        agent: 'codex',
-        modelId: 'gpt-5.6-sol',
-        effort: 'medium',
-        label: 'GPT-5.6 Sol · Medium'
-      },
-      {
-        id: 'gpt-5.6-sol:low',
-        agent: 'codex',
-        modelId: 'gpt-5.6-sol',
-        effort: 'low',
-        label: 'GPT-5.6 Sol · Low'
-      },
-      {
         id: 'gpt-6-astra:high',
         agent: 'codex',
         modelId: 'gpt-6-astra',
@@ -80,6 +38,48 @@ describe('getAgentLaunchPresets', () => {
         modelId: 'gpt-6-astra',
         effort: 'low',
         label: 'GPT-6 Astra · Low'
+      },
+      {
+        id: 'gpt-6-sol:high',
+        agent: 'codex',
+        modelId: 'gpt-6-sol',
+        effort: 'high',
+        label: 'GPT-6 Sol · High'
+      },
+      {
+        id: 'gpt-6-sol:medium',
+        agent: 'codex',
+        modelId: 'gpt-6-sol',
+        effort: 'medium',
+        label: 'GPT-6 Sol · Medium'
+      },
+      {
+        id: 'gpt-6-sol:low',
+        agent: 'codex',
+        modelId: 'gpt-6-sol',
+        effort: 'low',
+        label: 'GPT-6 Sol · Low'
+      },
+      {
+        id: 'gpt-6-luna:high',
+        agent: 'codex',
+        modelId: 'gpt-6-luna',
+        effort: 'high',
+        label: 'GPT-6 Luna · High'
+      },
+      {
+        id: 'gpt-6-luna:medium',
+        agent: 'codex',
+        modelId: 'gpt-6-luna',
+        effort: 'medium',
+        label: 'GPT-6 Luna · Medium'
+      },
+      {
+        id: 'gpt-6-luna:low',
+        agent: 'codex',
+        modelId: 'gpt-6-luna',
+        effort: 'low',
+        label: 'GPT-6 Luna · Low'
       }
     ])
   })
@@ -141,9 +141,9 @@ describe('resolveTuiAgentLaunchArgsForPreset', () => {
   })
 
   it.each([
-    ['gpt-5.6-sol', 'high'],
-    ['gpt-6-astra', 'medium'],
-    ['gpt-5.6-luna', 'low']
+    ['gpt-6-astra', 'high'],
+    ['gpt-6-sol', 'medium'],
+    ['gpt-6-luna', 'low']
   ])('resolves %s with model and reasoning effort flags', (modelId, effort) => {
     expect(
       resolveTuiAgentLaunchArgsForPreset({

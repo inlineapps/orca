@@ -21,7 +21,7 @@ export type AgentLaunchPreset = {
 const CURATED_LAUNCH_PRESETS: Partial<Record<TuiAgent, { models: string[]; efforts: string[] }>> = {
   claude: { models: ['opus', 'fable'], efforts: ['low', 'high'] },
   codex: {
-    models: ['gpt-5.6-luna', 'gpt-5.6-sol', 'gpt-6-astra'],
+    models: ['gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna'],
     efforts: ['high', 'medium', 'low']
   }
 }
