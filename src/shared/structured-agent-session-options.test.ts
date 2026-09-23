@@ -43,7 +43,7 @@ describe('structured agent session options', () => {
     })
 
     const bridgeRecord = createNativeChatSessionOptionRecord('codex')
-    bridgeRecord.model = { value: 'gpt-5.6-sol', source: 'reported' }
+    bridgeRecord.model = { value: 'gpt-6-sol', source: 'reported' }
     const bridge = buildNativeChatSessionOptionSnapshot({
       catalog: CODEX_SESSION_OPTION_CATALOG,
       models: CODEX_SESSION_OPTION_CATALOG.models,
