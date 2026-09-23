@@ -154,7 +154,7 @@ describe('QuickLaunchAgentMenuItems', () => {
     expect(html).toContain('title="Launch Claude on Fable · Low in a new terminal"')
     expect(html).toContain('title="Launch Claude on Fable · High in a new terminal"')
     expect(html).toContain('title="Launch Codex on GPT-6 Astra · High in a new terminal"')
-    expect(html).toContain('title="Launch Codex on GPT-5.6 Luna · Low in a new terminal"')
+    expect(html).toContain('title="Launch Codex on GPT-6 Luna · Low in a new terminal"')
     expect(html.match(/>Agent default</g) ?? []).toHaveLength(2)
     expect(html).not.toContain('Launch Gemini on')
   })
