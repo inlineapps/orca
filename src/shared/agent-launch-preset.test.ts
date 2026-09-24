@@ -5,8 +5,22 @@ describe('getAgentLaunchPresets', () => {
   it('offers only the curated Claude model/effort pairs', () => {
     expect(getAgentLaunchPresets('claude')).toEqual([
       { id: 'opus:low', agent: 'claude', modelId: 'opus', effort: 'low', label: 'Opus · Low' },
+      {
+        id: 'opus:medium',
+        agent: 'claude',
+        modelId: 'opus',
+        effort: 'medium',
+        label: 'Opus · Medium'
+      },
       { id: 'opus:high', agent: 'claude', modelId: 'opus', effort: 'high', label: 'Opus · High' },
       { id: 'fable:low', agent: 'claude', modelId: 'fable', effort: 'low', label: 'Fable · Low' },
+      {
+        id: 'fable:medium',
+        agent: 'claude',
+        modelId: 'fable',
+        effort: 'medium',
+        label: 'Fable · Medium'
+      },
       { id: 'fable:high', agent: 'claude', modelId: 'fable', effort: 'high', label: 'Fable · High' }
     ])
   })
@@ -104,6 +118,16 @@ describe('resolveTuiAgentLaunchArgsForPreset', () => {
         configuredArgs: { claude: '--model sonnet --verbose --effort max' }
       })
     ).toBe('--verbose --model opus --effort low')
+  })
+
+  it('launches a Claude medium effort preset', () => {
+    expect(
+      resolveTuiAgentLaunchArgsForPreset({
+        agent: 'claude',
+        presetId: 'opus:medium',
+        configuredArgs: { claude: '--model sonnet --verbose --effort high' }
+      })
+    ).toBe('--verbose --model opus --effort medium')
   })
 
   it('leaves tokens after the option terminator untouched', () => {
