@@ -217,6 +217,7 @@ export const CODEX_SESSION_OPTION_CATALOG: AgentSessionOptionCatalog = {
   // unknown persisted ids to pass through instead of claiming a complete list.
   models: [
     { id: 'gpt-6-astra', label: 'GPT-6 Astra', options: [codexEffort('ultra')] },
+    { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', options: [codexEffort('ultra')] },
     { id: 'gpt-6-sol', label: 'GPT-6 Sol', options: [codexEffort('ultra')] },
     { id: 'gpt-6-luna', label: 'GPT-6 Luna', options: [codexEffort('max')] },
     { id: 'gpt-5.5', label: 'GPT-5.5', options: [codexEffort('xhigh')] },

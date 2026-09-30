@@ -13,6 +13,27 @@ describe('getAgentLaunchPresets', () => {
         label: 'Opus · Medium'
       },
       { id: 'opus:high', agent: 'claude', modelId: 'opus', effort: 'high', label: 'Opus · High' },
+      {
+        id: 'sonnet:low',
+        agent: 'claude',
+        modelId: 'sonnet',
+        effort: 'low',
+        label: 'Sonnet · Low'
+      },
+      {
+        id: 'sonnet:medium',
+        agent: 'claude',
+        modelId: 'sonnet',
+        effort: 'medium',
+        label: 'Sonnet · Medium'
+      },
+      {
+        id: 'sonnet:high',
+        agent: 'claude',
+        modelId: 'sonnet',
+        effort: 'high',
+        label: 'Sonnet · High'
+      },
       { id: 'fable:low', agent: 'claude', modelId: 'fable', effort: 'low', label: 'Fable · Low' },
       {
         id: 'fable:medium',
@@ -54,25 +75,25 @@ describe('getAgentLaunchPresets', () => {
         label: 'GPT-6 Astra · Low'
       },
       {
-        id: 'gpt-6-sol:high',
+        id: 'gpt-6.1-sol:high',
         agent: 'codex',
-        modelId: 'gpt-6-sol',
+        modelId: 'gpt-6.1-sol',
         effort: 'high',
-        label: 'GPT-6 Sol · High'
+        label: 'GPT-6.1 Sol · High'
       },
       {
-        id: 'gpt-6-sol:medium',
+        id: 'gpt-6.1-sol:medium',
         agent: 'codex',
-        modelId: 'gpt-6-sol',
+        modelId: 'gpt-6.1-sol',
         effort: 'medium',
-        label: 'GPT-6 Sol · Medium'
+        label: 'GPT-6.1 Sol · Medium'
       },
       {
-        id: 'gpt-6-sol:low',
+        id: 'gpt-6.1-sol:low',
         agent: 'codex',
-        modelId: 'gpt-6-sol',
+        modelId: 'gpt-6.1-sol',
         effort: 'low',
-        label: 'GPT-6 Sol · Low'
+        label: 'GPT-6.1 Sol · Low'
       },
       {
         id: 'gpt-6-luna:high',
@@ -166,7 +187,7 @@ describe('resolveTuiAgentLaunchArgsForPreset', () => {
 
   it.each([
     ['gpt-6-astra', 'high'],
-    ['gpt-6-sol', 'medium'],
+    ['gpt-6.1-sol', 'medium'],
     ['gpt-6-luna', 'low']
   ])('resolves %s with model and reasoning effort flags', (modelId, effort) => {
     expect(
