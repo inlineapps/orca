@@ -63,7 +63,9 @@ function verifyPackagedDaemonEntryBoots(resourcesDir, options = {}) {
   console.log('[verify-packaged-daemon-entry] OK — packaged daemon-entry loads under plain Node')
 }
 
-const TERMINAL_HOST_BOOT_TIMEOUT_MS = 20_000
+// Why override: a freshly re-signed helper's first exec can be assessed by the OS for longer than 20s.
+const TERMINAL_HOST_BOOT_TIMEOUT_MS =
+  Number(process.env.ORCA_TERMINAL_HOST_BOOT_TIMEOUT_MS) || 20_000
 // Arithmetic so the shell echoing the typed command cannot satisfy the check.
 const TERMINAL_HOST_BOOT_COMMAND = 'echo "OK $((6*7))" && exit'
 const TERMINAL_HOST_BOOT_OUTPUT = 'OK 42'
