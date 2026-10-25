@@ -42,6 +42,7 @@ export type AgentSessionLaunchRequest = AgentLaunchRouteArgs & {
   requestId: AgentLaunchRequestId
   requestedSurface?: AgentLaunchSurface
   selectedExecutionHostId?: ExecutionHostId
+  initialOptions?: Readonly<Record<string, string>>
   resumeFrom?: StructuredAgentSessionResumeSource
   onPromptDelivered?: () => void
   /** The caller keeps the prompt's text if it does not go out (notes), so no composer gets it. */
@@ -64,6 +65,7 @@ export type AgentSessionLaunchVerdict = {
   executionHostId?: ExecutionHostId
   prompt?: string
   promptDelivery?: NativeChatLaunchPromptDelivery
+  initialOptions?: Readonly<Record<string, string>>
   resumeFrom?: StructuredAgentSessionResumeSource
   onPromptDelivered?: () => void
   promptKeptByCaller?: true
@@ -101,6 +103,7 @@ export type AgentSessionLaunchPlan = Readonly<AgentSessionLaunchVerdict> & {
 function structuredLaunchOptions(verdict: AgentSessionLaunchVerdict): StructuredAgentLaunchOptions {
   return {
     requestId: verdict.requestId,
+    ...(verdict.initialOptions ? { initialOptions: verdict.initialOptions } : {}),
     ...(verdict.prompt !== undefined ? { prompt: verdict.prompt } : {}),
     ...(verdict.promptDelivery ? { promptDelivery: verdict.promptDelivery } : {}),
     ...(verdict.resumeFrom ? { resumeFrom: verdict.resumeFrom } : {}),
@@ -306,6 +309,7 @@ export function planAgentSessionLaunch(
     ...(request.requestedSurface ? { requestedSurface: request.requestedSurface } : {}),
     requestId: request.requestId,
     agent: request.agent,
+    ...(request.initialOptions ? { initialOptions: request.initialOptions } : {}),
     ...(executionHostId ? { executionHostId } : {}),
     ...(request.workspace.worktreeId ? { worktreeId: request.workspace.worktreeId } : {}),
     ...(request.prompt !== undefined ? { prompt: request.prompt } : {}),

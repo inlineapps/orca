@@ -240,7 +240,7 @@ function structuredAgentLaunchState(
     cancelled: false,
     onVisibilityChanged: notifyStructuredLaunchListeners,
     callers,
-    selection: initialStructuredLaunchSelection(intent)
+    selection: { ...initialStructuredLaunchSelection(intent), held: options.initialOptions ?? {} }
   }
   state.onHostSeed = (seedOptions) => adoptPairedHostSeed(state, seedOptions)
   callers.onSettled = () => maybeCleanupLaunchState(state)

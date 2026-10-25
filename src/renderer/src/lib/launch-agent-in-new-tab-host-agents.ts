@@ -1,3 +1,5 @@
+import { agentLaunchPresetOptions } from '../../../shared/agent-launch-preset'
+import { workspaceKindForWorktreeId } from '@/lib/agent-launch-route-input'
 import { useAppStore } from '@/store'
 import type { AgentStartupPlan } from '@/lib/tui-agent-startup'
 import {
@@ -43,6 +45,25 @@ export function routeNewTabLaunch(
         replan: () => planAgentSessionLaunch(useAppStore.getState(), { requestId, ...request })
       }
     : { plan: planAgentSessionLaunch(store, { requestId, ...request }) }
+}
+
+export function routeNewTabLaunchForArgs(
+  store: Parameters<typeof planAgentSessionLaunch>[0],
+  args: LaunchAgentInNewTabArgs,
+  promptDelivery: AgentSessionLaunchRequest['promptDelivery']
+) {
+  return routeNewTabLaunch(store, args, {
+    agent: args.agent,
+    requestedSurface: args.requestedSurface,
+    selectedExecutionHostId: args.selectedExecutionHostId,
+    initialOptions: agentLaunchPresetOptions(args.agent, args.launchPresetId),
+    workspace: { kind: workspaceKindForWorktreeId(args.worktreeId), worktreeId: args.worktreeId },
+    prompt: args.prompt?.trim() ?? '',
+    promptDelivery,
+    tuiCustomization: { cwd: args.initialCwd },
+    onPromptDelivered: args.onPromptDelivered,
+    ...(args.promptKeptByCaller ? { promptKeptByCaller: true as const } : {})
+  })
 }
 
 /**

@@ -1,3 +1,4 @@
+import { agentLaunchPresetOptions } from '../../../shared/agent-launch-preset'
 import { toast } from 'sonner'
 import { getAgentLabel } from '@/lib/agent-catalog'
 import { ensureDetectedAgentsForWorktree } from '@/lib/agent-detection-target-inventory'
@@ -27,6 +28,7 @@ type LaunchAgentSessionContinuationArgs = {
   worktreeId: string
   groupId?: string | null
   initialCwd?: string | null
+  launchPresetId?: string | null
   launchChoice?: AgentLaunchChoice
   launchSource: LaunchSource
   signal?: AbortSignal
@@ -97,6 +99,7 @@ export async function launchAgentSessionContinuation({
   groupId,
   initialCwd,
   launchChoice,
+  launchPresetId,
   launchSource,
   signal
 }: LaunchAgentSessionContinuationArgs): Promise<boolean> {
@@ -107,6 +110,7 @@ export async function launchAgentSessionContinuation({
   let deliveryUnconfirmed = false
   const delivery = {
     agent,
+    launchPresetId,
     worktreeId,
     ...(groupId ? { groupId } : {}),
     prompt,
@@ -134,6 +138,7 @@ export async function launchAgentSessionContinuation({
     ...delivery,
     requestId: newAgentLaunchRequestId(),
     workspace: worktreeLaunchWorkspace(worktreeId),
+    initialOptions: agentLaunchPresetOptions(agent, launchPresetId),
     tuiCustomization: { cwd: initialCwd }
   }
   // Capture preference routes before detection awaits; only deliberate picks demand a surface.

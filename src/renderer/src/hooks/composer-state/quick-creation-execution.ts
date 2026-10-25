@@ -1,3 +1,4 @@
+import { agentLaunchPresetOptions } from '../../../../shared/agent-launch-preset'
 import type { ComposerModel } from './composer-model'
 
 type QuickCreationExecutionInput = Pick<
@@ -129,6 +130,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         telemetry: quickTelemetry
       } = buildQuickComposerStartup({
         agent,
+        launchPresetId: options?.launchPresetId,
         prompt: quickPrompt,
         draftPrompt: quickDraftPrompt,
         settings,
@@ -215,6 +217,9 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         pushTarget: submitPushTarget,
         agent,
         agentLaunchRoute,
+        initialAgentOptions: agent
+          ? agentLaunchPresetOptions(agent, options?.launchPresetId)
+          : undefined,
         linkedLinearIssue,
         linkedLinearIssueWorkspaceId,
         linkedLinearIssueOrganizationUrlKey,

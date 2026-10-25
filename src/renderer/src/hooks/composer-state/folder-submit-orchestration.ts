@@ -1,3 +1,8 @@
+import {
+  agentLaunchPresetOptions,
+  applyAgentLaunchPresetArgs
+} from '../../../../shared/agent-launch-preset'
+import { resolveExecutionHostAgentStartupShell } from '@/lib/execution-host-facts'
 import type { QuickSubmitOptions } from './quick-creation-request'
 import type { ComposerModel } from './composer-model'
 
@@ -116,9 +121,22 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
           note,
           quickAgent: agent,
           launchChoice: options?.launchChoice,
+          initialOptions: agent
+            ? agentLaunchPresetOptions(agent, options?.launchPresetId)
+            : undefined,
           autoRenameBranchFromWork: settings?.autoRenameBranchFromWork,
           agentCmdOverrides: settings?.agentCmdOverrides,
-          agentArgs: agent ? resolveTuiAgentLaunchArgs(agent, settings) : undefined,
+          agentArgs: agent
+            ? applyAgentLaunchPresetArgs({
+                agent,
+                baseArgs: resolveTuiAgentLaunchArgs(agent, settings),
+                presetId: options?.launchPresetId,
+                shell: resolveExecutionHostAgentStartupShell(
+                  launchHost,
+                  settings?.terminalWindowsShell
+                )
+              })
+            : undefined,
           agentEnv: agent
             ? resolveTuiAgentLaunchEnv(
                 agent,

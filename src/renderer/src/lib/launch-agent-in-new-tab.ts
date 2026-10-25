@@ -1,3 +1,5 @@
+import { applyAgentLaunchPresetArgs } from '../../../shared/agent-launch-preset'
+import { resolveStartupShell } from '../../../shared/tui-agent-startup-shell'
 import type {
   AgentSessionLaunchPlan,
   AgentSessionLaunchRequest
@@ -27,10 +29,9 @@ import { resolveAgentLaunchExecutionContext } from '@/lib/launch-agent-execution
 import { launchStructuredAgentFromNewTab } from '@/lib/launch-agent-in-new-tab-structured-route'
 import type { StructuredAgentLaunchSettlement } from '@/lib/structured-agent-launch-settlement'
 import type { StructuredLaunchTerminal } from '@/lib/structured-agent-session-launch-admission'
-import { workspaceKindForWorktreeId } from '@/lib/agent-launch-route-input'
 import {
   launchOnceHostAnswered,
-  routeNewTabLaunch
+  routeNewTabLaunchForArgs
 } from '@/lib/launch-agent-in-new-tab-host-agents'
 import type { AgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import type { NativeChatComposerFocusIntent } from '@/components/native-chat/use-native-chat-composer-reveal-focus'
@@ -56,6 +57,7 @@ export type LaunchAgentInNewTabArgs = LaunchAgentInNewTabRequest & {
   groupId?: string
   /** Optional initial prompt; delivery depends on `promptDelivery` and the agent's prompt mode. */
   prompt?: string
+  launchPresetId?: string | null
   /** Optional CLI arguments appended to the selected agent command. */
   agentArgs?: string | null
   initialCwd?: string | null
@@ -146,8 +148,14 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
     return null
   }
   const { resolvedLaunchPlatform, isRemote, queuedShell } = executionContext
-  const effectiveAgentArgs =
-    agentArgs !== undefined ? agentArgs : resolveTuiAgentLaunchArgs(agent, store.settings)
+  const effectiveAgentArgs = applyAgentLaunchPresetArgs({
+    agent,
+    baseArgs:
+      (agentArgs !== undefined ? agentArgs : resolveTuiAgentLaunchArgs(agent, store.settings)) ??
+      '',
+    presetId: args.launchPresetId,
+    shell: resolveStartupShell(resolvedLaunchPlatform, queuedShell)
+  })
   const agentEnv = resolveTuiAgentLaunchEnv(agent, store.settings, resolvedLaunchPlatform)
   const trimmedPrompt = prompt?.trim() ?? ''
   const hasPrompt = trimmedPrompt.length > 0
@@ -179,17 +187,7 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
 
   // Why first: a structured chat is created on whichever runtime owns the workspace, a paired
   // server included, so only a non-structured route falls through to the host-published terminal.
-  const route = routeNewTabLaunch(store, args, {
-    agent,
-    requestedSurface: args.requestedSurface,
-    selectedExecutionHostId: args.selectedExecutionHostId,
-    workspace: { kind: workspaceKindForWorktreeId(worktreeId), worktreeId },
-    prompt: trimmedPrompt,
-    promptDelivery: routePromptDelivery,
-    tuiCustomization: { cwd: initialCwd },
-    onPromptDelivered,
-    ...(args.promptKeptByCaller ? { promptKeptByCaller: true as const } : {})
-  })
+  const route = routeNewTabLaunchForArgs(store, args, routePromptDelivery)
   if ('awaited' in route) {
     return launchOnceHostAnswered(route, args, startupPlan, launchAgentInNewTabInternal)
   }

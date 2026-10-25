@@ -76,6 +76,12 @@ vi.mock('@/components/ui/dropdown-menu', async () => {
   }
 
   return {
+    DropdownMenuSub: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', null, children),
+    DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', null, children),
+    DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) =>
+      ReactActual.createElement('div', null, children),
     DropdownMenuItem: ({ children, ...props }: { children: React.ReactNode }) =>
       ReactActual.createElement('div', props, children),
     DropdownMenuShortcut: ({ children }: { children: React.ReactNode }) =>

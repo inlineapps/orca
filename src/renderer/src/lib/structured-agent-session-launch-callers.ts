@@ -26,6 +26,7 @@ export type StructuredAgentLaunchOptions = {
   /** The host the route decided on; read only by the caller that starts the launch. */
   executionHostId?: ExecutionHostId
   /** The saved selection a paired host reported it will seed; read only by the starting caller. */
+  initialOptions?: Readonly<Record<string, string>>
   hostSeedOptions?: Readonly<Record<string, string>>
   /** Final admission of a source-bound action, immediately before its first create is sent. */
   beforeCreate?: () => boolean

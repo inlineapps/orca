@@ -20007,6 +20007,11 @@
         }
       }
     },
+    "agentLaunchPreset": {
+      "modelAndEffort": "Model and effort",
+      "default": "Configured default",
+      "chooseFor": "{{agent}} model and effort"
+    },
     "agentSessionContinuation": {
       "handOffToAnotherAgent": "Hand Off to Another Agent",
       "dialogTitle": "Hand Off to Another Agent",

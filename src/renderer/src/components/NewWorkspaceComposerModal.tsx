@@ -217,6 +217,11 @@ function QuickTabBody({
     agent: TuiAgent | null
     surface?: AgentLaunchSurface
   }>({ agent: null })
+  const [presetPick, setPresetPick] = useState<{ agent: TuiAgent | null; id: string | null }>({
+    agent: null,
+    id: null
+  })
+  const launchPresetId = presetPick.agent === quickAgent ? presetPick.id : null
   const quickAgentSurface = quickAgentPick.agent === quickAgent ? quickAgentPick.surface : undefined
   const observation = useAgentMenuObservation(
     cardProps.agentRows?.target ?? null,
@@ -246,9 +251,17 @@ function QuickTabBody({
     }
     await submitQuick(quickAgent, {
       setupOnly: quickSetupOnly,
+      launchPresetId,
       launchChoice: launchSelection.choice
     })
-  }, [createDisabled, quickAgent, launchSelection.choice, quickSetupOnly, submitQuick])
+  }, [
+    createDisabled,
+    quickAgent,
+    launchSelection.choice,
+    quickSetupOnly,
+    launchPresetId,
+    submitQuick
+  ])
   // Why: Add Project layers over the composer as a nested dialog instead of
   // replacing it in the activeModal slot — closing the composer mid-flow (and
   // losing the typed name/prompt) was the old, abrupt behavior. Once opened it
@@ -362,6 +375,8 @@ function QuickTabBody({
         onComposerNodeChange={onComposerNodeChange}
         nameInputRef={nameInputRef}
         quickAgent={quickAgent}
+        launchPresetId={launchPresetId}
+        onLaunchPresetChange={(id) => setPresetPick({ agent: quickAgent, id })}
         onQuickAgentChange={handleQuickAgentChange}
         quickSetupOnly={quickSetupOnly}
         onQuickSetupOnlySelect={handleQuickSetupOnlySelect}

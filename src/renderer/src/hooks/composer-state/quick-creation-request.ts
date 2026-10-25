@@ -31,6 +31,7 @@ export type QuickCreationRequestInput = {
   linkedPR: number | null
   pushTarget: GitPushTarget | undefined
   agent: TuiAgent | null
+  initialAgentOptions?: Readonly<Record<string, string>>
   agentLaunchRoute?: WorktreeCreationRequest['agentLaunchRoute']
   linkedLinearIssue: string | undefined
   linkedLinearIssueWorkspaceId: string | undefined
@@ -56,6 +57,7 @@ export type QuickCreationRequestInput = {
 }
 
 export type QuickSubmitOptions = {
+  launchPresetId?: string | null
   setupOnly?: boolean
   launchChoice?: AgentLaunchChoice
 }
@@ -93,6 +95,7 @@ export function buildQuickCreationRequest(
     ...(input.linkedPR != null ? { linkedPR: input.linkedPR } : {}),
     ...(input.pushTarget ? { pushTarget: input.pushTarget } : {}),
     agent: input.agent,
+    ...(input.initialAgentOptions ? { initialAgentOptions: input.initialAgentOptions } : {}),
     ...(input.agentLaunchRoute ? { agentLaunchRoute: input.agentLaunchRoute } : {}),
     ...(input.linkedLinearIssue ? { linkedLinearIssue: input.linkedLinearIssue } : {}),
     ...(input.linkedLinearIssueWorkspaceId !== undefined

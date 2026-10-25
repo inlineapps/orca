@@ -1,3 +1,4 @@
+import { getAgentLaunchPresets } from '../../../../shared/agent-launch-preset'
 import React, { useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
@@ -8,6 +9,9 @@ import { activeAgentNotesSendFailureMessage } from '@/lib/active-agent-note-send
 import { Settings as SettingsIcon } from 'lucide-react'
 import { AgentTerminalLaunchButton } from '@/components/agent/AgentTerminalLaunchButton'
 import {
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut
@@ -75,7 +79,7 @@ export function useTabAgentMenuLaunch({
   onFocusChat?: (tabId: string) => void
 }) {
   const runLaunch = useCallback(
-    (row: NewTabAgentMenuRow) => {
+    (row: NewTabAgentMenuRow, launchPresetId?: string) => {
       if (disabled || row.kind === 'chat-unavailable') {
         return
       }
@@ -92,6 +96,7 @@ export function useTabAgentMenuLaunch({
             }
           : {}),
         agent,
+        launchPresetId,
         worktreeId,
         groupId,
         ...(prompt !== undefined ? { prompt } : {}),
@@ -173,7 +178,7 @@ export function ProjectedAgentMenuItems({
 }: {
   disabled?: boolean
   model: NewTabAgentMenuModel
-  runLaunch: (row: NewTabAgentMenuRow) => void
+  runLaunch: (row: NewTabAgentMenuRow, launchPresetId?: string) => void
 }): React.JSX.Element {
   const desktopDefaultAgent = useAppStore((s) => s.settings?.defaultTuiAgent)
   const openSettingsPage = useAppStore((s) => s.openSettingsPage)
@@ -283,6 +288,42 @@ export function ProjectedAgentMenuItems({
                 {rowContent}
               </DropdownMenuItem>
             )}
+            {getAgentLaunchPresets(agent).length > 0 ? (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger disabled={disabled}>
+                  <AgentIcon agent={agent} size={14} />
+                  {translate(
+                    'components.agentLaunchPreset.chooseFor',
+                    '{{agent}} model and effort',
+                    { agent: rowLabel(row) }
+                  )}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {getAgentLaunchPresets(agent).map((preset) =>
+                    row.kind === 'chat' && detectedIds?.includes(agent) ? (
+                      <ChatRow
+                        key={preset.id}
+                        row={row}
+                        label={preset.label}
+                        disabled={disabled}
+                        runLaunch={(picked) => runLaunch(picked, preset.id)}
+                      >
+                        <span className="flex-1">{preset.label}</span>
+                      </ChatRow>
+                    ) : (
+                      <DropdownMenuItem
+                        key={preset.id}
+                        variant="launch"
+                        disabled={disabled}
+                        onSelect={() => runLaunch(row, preset.id)}
+                      >
+                        {preset.label}
+                      </DropdownMenuItem>
+                    )
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            ) : null}
           </React.Fragment>
         )
       })}
@@ -302,7 +343,7 @@ function ChatRow({
   row: Extract<NewTabAgentMenuRow, { kind: 'chat' }>
   label: string
   disabled: boolean
-  runLaunch: (row: NewTabAgentMenuRow) => void
+  runLaunch: (row: NewTabAgentMenuRow, launchPresetId?: string) => void
   children: React.ReactNode
 }): React.JSX.Element {
   const cliButton = useRef<HTMLButtonElement>(null)

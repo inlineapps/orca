@@ -89,6 +89,7 @@ export type WorktreeCreationRequest = {
   pushTarget?: GitPushTarget
   agent: TuiAgent | null
   /** Renderer-owned route decision captured at submit time and reused on retry. */
+  initialAgentOptions?: Readonly<Record<string, string>>
   agentLaunchRoute?: AgentLaunchRoute
   linkedLinearIssue?: string
   linkedLinearIssueWorkspaceId?: string | null

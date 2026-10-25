@@ -1,3 +1,5 @@
+import { applyAgentLaunchPresetArgs } from '../../../../shared/agent-launch-preset'
+import { resolveStartupShell } from '../../../../shared/tui-agent-startup-shell'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { AgentStartupShell } from '../../../../shared/tui-agent-startup-shell'
@@ -16,6 +18,7 @@ import {
 } from '@/lib/execution-host-facts'
 
 export type QuickComposerStartupInput = {
+  launchPresetId?: string | null
   agent: TuiAgent | null
   prompt: string
   draftPrompt: string | null | undefined
@@ -42,7 +45,15 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           agent,
           draft: draftPrompt,
           cmdOverrides: settings?.agentCmdOverrides ?? {},
-          agentArgs: resolveTuiAgentLaunchArgs(agent, settings),
+          agentArgs: applyAgentLaunchPresetArgs({
+            agent,
+            baseArgs: resolveTuiAgentLaunchArgs(agent, settings),
+            presetId: input.launchPresetId,
+            shell: resolveStartupShell(
+              requireExecutionHostPlatform(input.launchHost),
+              input.shell ?? undefined
+            )
+          }),
           agentEnv: resolveTuiAgentLaunchEnv(
             agent,
             settings,
@@ -70,7 +81,15 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
       agent,
       prompt,
       cmdOverrides: settings?.agentCmdOverrides ?? {},
-      agentArgs: resolveTuiAgentLaunchArgs(agent, settings),
+      agentArgs: applyAgentLaunchPresetArgs({
+        agent,
+        baseArgs: resolveTuiAgentLaunchArgs(agent, settings),
+        presetId: input.launchPresetId,
+        shell: resolveStartupShell(
+          requireExecutionHostPlatform(input.launchHost),
+          input.shell ?? undefined
+        )
+      }),
       agentEnv: resolveTuiAgentLaunchEnv(
         agent,
         settings,

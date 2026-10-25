@@ -1,3 +1,4 @@
+import { AgentLaunchPresetSelect } from '@/components/agent/AgentLaunchPresetSelect'
 import React from 'react'
 import { ChevronDown, Settings2 } from 'lucide-react'
 import AgentCombobox from '@/components/agent/AgentCombobox'
@@ -10,6 +11,8 @@ import type { TuiAgent } from '../../../../shared/tui-agent'
 
 type NewWorkspaceComposerAgentSectionProps = Pick<
   NewWorkspaceComposerCardProps,
+  | 'launchPresetId'
+  | 'onLaunchPresetChange'
   | 'quickAgent'
   | 'agentSurfaceRows'
   | 'onQuickAgentChange'
@@ -32,6 +35,8 @@ type NewWorkspaceComposerAgentSectionProps = Pick<
 
 export function NewWorkspaceComposerAgentSection({
   quickAgent,
+  launchPresetId = null,
+  onLaunchPresetChange,
   agentSurfaceRows,
   onQuickAgentChange,
   quickSetupOnly = false,
@@ -94,6 +99,14 @@ export function NewWorkspaceComposerAgentSection({
         <AgentCombobox {...comboboxProps} surfaceRows={agentSurfaceRows} />
       </div>
 
+      {onLaunchPresetChange && !quickSetupOnly ? (
+        <AgentLaunchPresetSelect
+          agent={quickAgent}
+          value={launchPresetId}
+          onValueChange={onLaunchPresetChange}
+          disabled={createDisabled}
+        />
+      ) : null}
       <div className="!mb-2">
         <Button
           type="button"

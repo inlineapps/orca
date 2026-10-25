@@ -96,6 +96,25 @@ describe('planAgentSessionLaunch', () => {
     )
   })
 
+  it('carries an explicit model and effort through a paired-host launch', async () => {
+    const initialOptions = { model: 'gpt-6.1-sol', effort: 'low' }
+    const plan = planAgentSessionLaunch(store, {
+      requestId: 'picked-launch',
+      agent: 'codex',
+      workspace: { kind: 'folder', worktreeId: 'folder:picked' },
+      requestedSurface: 'chat',
+      selectedExecutionHostId: 'runtime:paired',
+      initialOptions
+    })
+    await plan.launch(hooks)
+    expect(mocks.beginStructuredAgentLaunchSettlement).toHaveBeenCalledWith(
+      'folder:picked',
+      'codex',
+      expect.objectContaining({ initialOptions, executionHostId: 'runtime:paired' }),
+      hooks
+    )
+  })
+
   it('sends no delivery fields the request did not carry', async () => {
     const plan = planAgentSessionLaunch(store, {
       requestId: 'request-3',

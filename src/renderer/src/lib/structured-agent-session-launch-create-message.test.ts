@@ -167,6 +167,18 @@ describe('the first message owned by create', () => {
     vi.useRealTimers()
   })
 
+  it('starts the first turn on the model and effort picked before launch', async () => {
+    mocks.call.mockImplementation(async () => created())
+    const launch = startStructuredAgentLaunch('workspace-preset', 'codex', {
+      requestId: newAgentLaunchRequestId(),
+      executionHostId: 'local',
+      prompt: 'Review the inventory calculation',
+      initialOptions: { model: 'gpt-6-astra', effort: 'high' }
+    })
+    await launch.launchResult
+    expect(createParams().options).toMatchObject({ model: 'gpt-6-astra', effort: 'high' })
+  })
+
   it('freezes the message and held options in create and publishes without another read or send', async () => {
     const create = deferred<unknown>()
     mocks.call.mockReturnValue(create.promise)

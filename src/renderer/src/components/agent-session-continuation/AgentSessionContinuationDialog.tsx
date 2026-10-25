@@ -1,3 +1,4 @@
+import { AgentLaunchPresetSelect } from '@/components/agent/AgentLaunchPresetSelect'
 import { agentsOfferedForLaunch } from '@/lib/host-chat-program'
 import { worktreeLaunchWorkspace } from '@/lib/agent-launch-route-input'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -66,9 +67,17 @@ export function AgentSessionContinuationDialog({
     request: AgentSessionContinuationRequest | null
     mode: AgentSessionContinuationContextMode
   } | null>(null)
+  const [presetPick, setPresetPick] = useState<{
+    request: AgentSessionContinuationRequest | null
+    agent: TuiAgent | null
+    id: string | null
+  } | null>(null)
   if (!open) {
     if (pick) {
       setPick(null)
+    }
+    if (presetPick) {
+      setPresetPick(null)
     }
     if (contextPick) {
       setContextPick(null)
@@ -121,6 +130,10 @@ export function AgentSessionContinuationDialog({
       defaultAgent: settings?.defaultTuiAgent
     })
   const selection = observation.selectionFor(selectedAgent, currentPick?.surface)
+  const launchPresetId =
+    presetPick?.request === request && presetPick?.agent === selectedAgent
+      ? (presetPick?.id ?? null)
+      : null
 
   useEffect(() => {
     if (!starting) {
@@ -176,6 +189,7 @@ export function AgentSessionContinuationDialog({
       groupId: request.groupId,
       initialCwd: request.initialCwd,
       launchChoice: selection.choice,
+      launchPresetId,
       launchSource: request.launchSource,
       signal: abortRef.current?.signal
     })
@@ -279,6 +293,13 @@ export function AgentSessionContinuationDialog({
               </p>
             ) : null}
           </div>
+
+          <AgentLaunchPresetSelect
+            agent={selectedAgent}
+            value={launchPresetId}
+            disabled={starting}
+            onValueChange={(id) => setPresetPick({ request, agent: selectedAgent, id })}
+          />
 
           <div className="min-w-0 space-y-1.5">
             <label className="text-xs font-medium">

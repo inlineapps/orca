@@ -133,3 +133,17 @@ it('reports a clipboard failure instead of claiming the prompt was copied', asyn
   expect(screen.queryByText(/Prompt copied/)).toBeNull()
   consoleError.mockRestore()
 })
+
+it('hands off with the selected model and effort and clears it on reopen', async () => {
+  const props = { open: true, request, onOpenChange: vi.fn() }
+  const view = render(<AgentSessionContinuationDialog {...props} />, { wrapper: TooltipProvider })
+  fireEvent.click(screen.getByRole('combobox', { name: 'Model and effort' }))
+  fireEvent.click(screen.getByRole('option', { name: 'GPT-6.1 Sol · Low' }))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Start New Session' })))
+  expect(mocks.launch.mock.calls.at(-1)?.[0].launchPresetId).toBe('gpt-6.1-sol:low')
+  view.rerender(<AgentSessionContinuationDialog {...props} open={false} />)
+  view.rerender(<AgentSessionContinuationDialog {...props} />)
+  expect(screen.getByRole('combobox', { name: 'Model and effort' }).textContent).toContain(
+    'Configured default'
+  )
+})

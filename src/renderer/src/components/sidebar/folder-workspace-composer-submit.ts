@@ -55,6 +55,7 @@ type SubmitFolderWorkspaceCreateParams = {
   linkedTaskSourceContext?: TaskSourceContext | null
   note: string
   quickAgent: TuiAgent | null
+  initialOptions?: Readonly<Record<string, string>>
   launchChoice?: AgentLaunchChoice
   autoRenameBranchFromWork: boolean | undefined
   agentCmdOverrides: Record<string, string> | undefined
@@ -77,6 +78,7 @@ export async function submitFolderWorkspaceCreate({
   note,
   quickAgent,
   launchChoice,
+  initialOptions,
   autoRenameBranchFromWork,
   agentCmdOverrides,
   agentArgs,
@@ -140,6 +142,7 @@ export async function submitFolderWorkspaceCreate({
     ? {
         requestId: newAgentLaunchRequestId(),
         agent: quickAgent,
+        initialOptions,
         workspace: {
           kind: 'folder' as const,
           runtimeEnvironmentId,
